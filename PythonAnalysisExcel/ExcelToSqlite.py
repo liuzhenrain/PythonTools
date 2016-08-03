@@ -51,7 +51,7 @@ def importFiles(folderPath, wildcard, recursion):
     corsur.close()
     dbCn.close()
 
-    print list.__len__()
+    print len(list)
 
 
 # 获取制定文件夹内所有的制定类型的文件
