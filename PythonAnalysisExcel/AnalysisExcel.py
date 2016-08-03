@@ -1,18 +1,10 @@
 # coding: utf-8
 """
-Created on 2016/7/26
-@author: liuzhenrain
+@Author : Liuzhenrain
+@Create : 16/8/3
 """
-
-from __future__ import division
-
 import xlrd
 import os
-import glob
-import config_gen
-
-# Excel存储目录
-pathFolder = ""
 
 commentRow = 0
 exportTypeRow = 1  # 输出类型所在行
@@ -21,35 +13,6 @@ fieldNameRow = 3
 dataStartRow = 4
 listSep = '^'
 
-
-# 获取制定文件夹内所有的制定类型的文件
-# path：文件夹路径
-# wilcard:文件后缀名
-# recursion: 是否遍历子目录
-def getFileList(path, wildcard, recursion):
-    # 改变工作路径到指定的路径
-    # os.chdir(path)
-
-    fileList = []
-
-    # 查找文件夹下所有的文件
-    files = os.listdir(path)
-
-    # 遍历所有的文件
-    for name in files:
-        # 获取完整的路径名，用于判定是否为文件夹
-        fullname = os.path.join(path, name)
-        if (os.path.isdir(fullname) & recursion):
-            getFileList(fullname, wildcard, recursion)
-        else:
-            if (name.endswith(wildcard)):
-                fileList.append(name)
-    # print fileList.__len__()
-    # 可以返回多个值，超多数据
-    return fileList
-
-
-# Excel 操作部分   """
 def get_cell_data(sheet, row, col):
     if row > sheet.nrows or col > sheet.ncols:
         return ""
@@ -104,20 +67,3 @@ def readexcel(filename):
         sheetDatas[str(rowIndex)] = rowValueArray
 
     print len(sheetDatas)
-
-
-def main(folderPath):
-    fileList = glob.glob1(folderPath, "*.xls")
-    for item in fileList:
-        readexcel(item)
-        # exit()
-    return 0
-
-
-if __name__ == "__main__":
-    # 指定excel文件的位置
-    # os.path.abspath('.') 会找到当前py文件的文件夹路径
-    # os.sep 确定当前系统的路径分隔符，可以使用 print os.sep 打印看一下
-    pathFolder = os.path.abspath('.') + os.sep + "excelfile"
-    # importFiles(pathFolder, ".xls", 0)
-    main(pathFolder)
