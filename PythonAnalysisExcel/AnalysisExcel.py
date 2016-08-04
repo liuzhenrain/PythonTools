@@ -13,6 +13,7 @@ fieldNameRow = 3
 dataStartRow = 4
 listSep = '^'
 
+
 def get_cell_data(sheet, row, col):
     if row > sheet.nrows or col > sheet.ncols:
         return ""
@@ -21,6 +22,64 @@ def get_cell_data(sheet, row, col):
         return sheet.cell_value(row, col).encode('utf-8')
     else:
         return str(sheet.cell_value(row, col))
+
+
+# 读取excel数据，会返回一个字典。
+# 字典数据组成，key:mainsheet,value:{colname:array,dataDic:{data:array}}
+#              key:[subsheetname],value:{colname:array,dataDic:{data:array}}
+
+def read_excel_data(workbook, filename, sheetname, ismain, excel_data_dic={}):
+    # 此字典用于保存所有的数据,数据结构参照方法注释
+
+    sheet_data_dic = {}
+    try:
+        worksheet = workbook.sheet_by_name(sheetname)
+    except:
+        if ismain == True:
+            print "文件名%s和主表名%s字不一致，请修改EXCEL文件" % (filename, sheetname)
+            exit()
+        else:
+            print "Excel文件:%s中没有%s这个表" % (filename, sheetname)
+            exit()
+    colcount = worksheet.ncols
+    rowcount = worksheet.nrows
+    dicKey = "mainsheet"
+    if not ismain:
+        dicKey = sheetname
+
+    colnames = []  # 记录所有的列名
+    for colIndex in range(0, colcount):
+        fieldType = get_cell_data(worksheet, exportTypeRow, colIndex)
+        if fieldType.lower() == "s":
+            continue
+        else:
+            value = get_cell_data(worksheet, fieldNameRow, colIndex)
+            colnames.append(value)
+    # 将列名记录到字典中
+    sheet_data_dic["colname"] = colnames
+
+    # 获取实际数据
+    data_dic = {}
+    for rowIndex in range(dataStartRow, rowcount):
+        rowdata =[]
+        dataKey = get_cell_data(worksheet, rowIndex, 0)
+        # 如果表中的第一个数据key为空值，直接跳过。
+        if dataKey == "":
+            print "%s表第%s行Key数据为空，直接跳过." % (sheetname, rowIndex + 1)
+            continue
+        for colIndex in range(0, colcount):
+            fieldType = get_cell_data(worksheet, exportTypeRow, colIndex)
+            if fieldType.lower() == "s":
+                continue
+            else:
+                value = get_cell_data(worksheet, rowIndex, colIndex)
+                rowdata.append(value)
+            print ""
+        data_dic[rowIndex] = rowdata
+
+    sheet_data_dic["datadic"] = data_dic
+
+    excel_data_dic[dicKey] = sheet_data_dic
 
 
 def readexcel(filename):
