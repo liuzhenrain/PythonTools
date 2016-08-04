@@ -25,8 +25,8 @@ def get_cell_data(sheet, row, col):
 
 
 # 读取excel数据，会返回一个字典。
-# 字典数据组成，key:mainsheet,value:{colname:array,dataDic:{data:array}}
-#              key:[subsheetname],value:{colname:array,dataDic:{data:array}}
+# 字典数据组成，key:mainsheet,value:{fieldDic:{fieldName:fieldType},dataDic:{rowIndex:array}}
+#              key:[subsheetname],value:{fieldDic:{fieldName:fieldType},dataDic:{rowIndex:array}}
 
 def read_excel_data(workbook, filename, sheetname, ismain, excel_data_dic={}):
     # 此字典用于保存所有的数据,数据结构参照方法注释
@@ -47,21 +47,22 @@ def read_excel_data(workbook, filename, sheetname, ismain, excel_data_dic={}):
     if not ismain:
         dicKey = sheetname
 
-    colnames = []  # 记录所有的列名
+    fieldDic = {}  # 记录所有的列名
     for colIndex in range(0, colcount):
-        fieldType = get_cell_data(worksheet, exportTypeRow, colIndex)
-        if fieldType.lower() == "s":
+        exportType = get_cell_data(worksheet, exportTypeRow, colIndex)
+        if exportType.lower() == "s":
             continue
         else:
+            fieldType = get_cell_data(worksheet, fieldTypeRow, colIndex)
             value = get_cell_data(worksheet, fieldNameRow, colIndex)
-            colnames.append(value)
+            fieldDic[str(fieldType)] = value
     # 将列名记录到字典中
-    sheet_data_dic["colname"] = colnames
+    sheet_data_dic["fieldDic"] = fieldDic
 
     # 获取实际数据
     data_dic = {}
     for rowIndex in range(dataStartRow, rowcount):
-        rowdata =[]
+        rowdata = []
         dataKey = get_cell_data(worksheet, rowIndex, 0)
         # 如果表中的第一个数据key为空值，直接跳过。
         if dataKey == "":
