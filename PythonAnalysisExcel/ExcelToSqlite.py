@@ -9,7 +9,6 @@ from __future__ import division
 import xlrd
 import os
 import glob
-import config_gen
 
 # Excel存储目录
 pathFolder = ""
