@@ -15,6 +15,7 @@ import DataAccess
 # Excel存储目录
 pathFolder = ""
 
+
 # 获取制定文件夹内所有的制定类型的文件
 # path：文件夹路径
 # wilcard:文件后缀名
@@ -47,7 +48,7 @@ def main(folderPath):
 
     for item in fileList:
         excel_data_dic = readexcel(item)
-        DataAccess.SaveToSqlite(excel_data_dic)
+        DataAccess.SaveToSqlite("steelray.db", excel_data_dic)
         # exit()
     return 0
 
