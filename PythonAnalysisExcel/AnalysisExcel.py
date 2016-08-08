@@ -23,9 +23,13 @@ def _get_cell_data(sheet, row, col):
         return str(sheet.cell_value(row, col))
 
 
-# 读取excel数据，会返回一个字典。
-# 字典数据组成，key:mainsheetname,value:{fieldDic:{fieldname:array,fieldtype:fieldType},dataDic:{rowIndex:array},exporttype:array}
-#              key:[subsheetname],value:{fieldDic:{fieldname:array,fieldtype:fieldType},dataDic:{rowIndex:array},exporttype:array}
+# 读取excel数据，会返回两个个字典。
+# sheet_data_dic 字典数据组成:
+#           key:[subsheetname],value:{fieldDic:{fieldname:array,fieldtype:fieldType},dataDic:{rowIndex:array},exporttype:array}
+# fieldDic 字典数据组成:
+#           key:fieldname,value:Array
+#           key:fieldtype,value:Array
+#           key:exporttype,value:Array
 
 def _read_excel_data(workbook, filename, sheetname, ismain, excel_data_dic={}):
     # 此字典用于保存所有的数据,数据结构参照方法注释
@@ -46,10 +50,10 @@ def _read_excel_data(workbook, filename, sheetname, ismain, excel_data_dic={}):
     # if not ismain:
     dicKey = sheetname
 
-    fieldDic = {}  # 记录所有的字段名以及字段类型
+    fieldDic = {}  # 记录所有的字段名以及字段类型,去掉导出类型为S的部分
     field_name_array = []
     field_type_array = []
-    export_type =[]
+    export_type = []
     for colIndex in range(0, colcount):
         exportType = _get_cell_data(worksheet, exportTypeRow, colIndex)
         if exportType.lower() == "s":
@@ -67,7 +71,7 @@ def _read_excel_data(workbook, filename, sheetname, ismain, excel_data_dic={}):
     fieldDic["fieldname"] = field_name_array
     fieldDic["fieldtype"] = field_type_array
     fieldDic["exporttype"] = export_type
-    # 将字段信息记录到字典中
+    # # 将字段信息记录到字典中
     sheet_data_dic["fielddic"] = fieldDic
 
     # 获取实际数据
