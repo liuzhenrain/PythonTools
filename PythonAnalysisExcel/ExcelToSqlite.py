@@ -11,6 +11,7 @@ import glob
 # import AnalysisExcel
 from AnalysisExcel import *
 import DataAccess
+import LogCtrl
 
 # Excel存储目录
 pathFolder = ""
@@ -45,15 +46,18 @@ def getFileList(path, wildcard, recursion):
 
 def main(folderPath):
     fileList = glob.glob1(folderPath, "*.xls")
-
+    globfiles = glob.glob(folderPath)
     sql_command_array = []
-    for item in fileList:
-        excel_data_dic = readexcel(item)
-        sql_command_array += DataAccess.SaveToSqlite("steelray.db", excel_data_dic)
-    print "查询语句总条数:",len(sql_command_array)
-    command_file = open("commandFile", "w")
-    command_file.write("\n".join(sql_command_array))
-    command_file.close()
+    for item in globfiles:
+        print item,os.path.getmtime(item)
+    # for item in fileList:
+    #     excel_data_dic = readexcel(item)
+    #     sql_command_array += DataAccess.SaveToSqlite("steelray.db", excel_data_dic)
+    # print "查询语句总条数:",len(sql_command_array)
+    # command_file = open("commandFile.txt", "a")
+    # command_file.write("\n".join(sql_command_array))
+    # command_file.close()
+    # LogCtrl.write_log_file()
     return 0
 
 

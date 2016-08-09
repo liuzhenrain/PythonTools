@@ -59,13 +59,13 @@ def SaveToSqlite(databaseName, excel_data_dic={}):
         cursor.execute("select sql from sqlite_master where name='%s' and type='table';" % keyName)
         sql_all = cursor.fetchall()
         if len(sql_all) > 0:
-            print "查询到有%s表" % (keyName)
+            # print "查询到有%s表" % (keyName)
             # 查询到了指定的表，那就可以开始进行数据比对工作
             # 首先比对列数是否一致。
             cursor.execute("PRAGMA table_info('%s');" % (keyName))
             sql_all = cursor.fetchall()
             if len(sql_all) <> sql_table_ncols:
-                print "数据库表%s的列数和Excel数据应写入的列数%s不一致" % (len(sql_all), sql_table_ncols)
+                # print "数据库表%s的列数和Excel数据应写入的列数%s不一致" % (len(sql_all), sql_table_ncols)
                 # 查询出来的列数不一致，先删除表，然后创建表
                 try:
                     # 删除表
@@ -82,7 +82,7 @@ def SaveToSqlite(databaseName, excel_data_dic={}):
                     print traceback.format_exc()
                     conn.rollback()
             else:
-                print "列数一致，进行数据比对"
+                # print "列数一致，进行数据比对"
                 cursor.execute("select count(*) from %s;" % (keyName))
                 values = cursor.fetchone()
                 count = values[0]
@@ -96,7 +96,7 @@ def SaveToSqlite(databaseName, excel_data_dic={}):
                         print traceback.format_exc()
                         conn.rollback()
                 else:
-                    print "数据表中有数据", count
+                    # print "数据表中有数据", count
                     # 数据表中有数据，对每行数据进行比对，通过rowindex
                     command_array = get_update_command(keyName, excel_dic, has_unikey)
                     if len(command_array) > 0:
@@ -107,7 +107,7 @@ def SaveToSqlite(databaseName, excel_data_dic={}):
                             print traceback.format_exc()
                             conn.rollback()
                     # 删除在EXCEL中没有但是数据库中有的指定行号的数据
-                    command_array = get_delete_command(keyName,excel_dic,has_unikey)
+                    command_array = get_delete_command(keyName, excel_dic, has_unikey)
                     if len(command_array) > 0:
                         try:
                             cursor.executescript("".join(command_array))
@@ -116,7 +116,7 @@ def SaveToSqlite(databaseName, excel_data_dic={}):
                             print traceback.format_exc()
                             conn.rollback()
         else:
-            print "没有查询到%s 表" % (keyName)
+            # print "没有查询到%s 表" % (keyName)
             # 创建表
             try:
                 # print "创建表", sqlcommand

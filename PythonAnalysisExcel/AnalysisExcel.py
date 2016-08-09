@@ -6,6 +6,7 @@
 import xlrd
 import os
 import traceback
+import LogCtrl
 
 commentRow = 0
 exportTypeRow = 1  # 输出类型所在行
@@ -22,7 +23,7 @@ def _get_cell_data(sheet, row, col):
         return sheet.cell_value(row, col).encode('utf-8')
     else:
         return str(sheet.cell_value(row, col))
-    # return (sheet.cell_value(row, col) + "").encode('utf-8')
+        # return (sheet.cell_value(row, col) + "").encode('utf-8')
 
 
 # 读取excel数据，会返回两个个字典。
@@ -42,16 +43,18 @@ def _read_excel_data(workbook, filename, sheetname, ismain, excel_data_dic={}):
     except:
 
         if ismain == True:
-            print "文件名%s和主表名%s字不一致，请修改EXCEL文件" % (filename, sheetname)
+            # print "文件名%s和主表名%s字不一致，请修改EXCEL文件" % (filename, sheetname)
+            LogCtrl.log("文件名%s和主表名%s字不一致，请修改EXCEL文件" % (filename, sheetname))
             return excel_data_dic
         else:
-            print "Excel文件:%s中没有%s这个表" % (filename, sheetname)
+            # print "Excel文件:%s中没有%s这个表" % (filename, sheetname)
+            LogCtrl.log("Excel文件:%s中没有%s这个表" % (filename, sheetname))
             return excel_data_dic
         print traceback.format_exc()
         exit()
     colcount = worksheet.ncols
     rowcount = worksheet.nrows
-    real_data_col =[] # 包含有实际内容的列数据
+    real_data_col = []  # 包含有实际内容的列数据
     # dicKey = "mainsheet"
     # if not ismain:
     dicKey = sheetname
@@ -65,11 +68,14 @@ def _read_excel_data(workbook, filename, sheetname, ismain, excel_data_dic={}):
         exportType = _get_cell_data(worksheet, exportTypeRow, colindex)
         if exportType.lower() == "s":
             continue
-        fieldType = _get_cell_data(worksheet,fieldTypeRow,colindex)
-        fieldName = _get_cell_data(worksheet,fieldNameRow,colindex)
+        fieldType = _get_cell_data(worksheet, fieldTypeRow, colindex)
+        fieldName = _get_cell_data(worksheet, fieldNameRow, colindex)
         if fieldType == "" or fieldName == "":
             continue
         real_data_col.append(colindex)
+    if len(real_data_col) == 1:
+        LogCtrl.log("只有一个KEY值需要写入到客户端数据库,所以直接跳过。")
+        return excel_data_dic
     for colIndex in real_data_col:
         export_type.append(exportType)
         fieldType = _get_cell_data(worksheet, fieldTypeRow, colIndex)
@@ -94,22 +100,22 @@ def _read_excel_data(workbook, filename, sheetname, ismain, excel_data_dic={}):
         dataKey = _get_cell_data(worksheet, rowIndex, 0)
         # 如果表中的第一个数据key为空值，直接跳过。
         if dataKey == "":
-            print "%s表第%s行Key数据为空，直接跳过." % (sheetname, rowIndex + 1)
+            LogCtrl.log("%s表第%s行Key数据为空，直接跳过." % (sheetname, rowIndex + 1))
             for colIndex in real_data_col:
                 # exportType = _get_cell_data(worksheet, exportTypeRow, colIndex)
                 # if exportType.lower() == "s":
                 #     continue
                 # else:
-                    value = "%s表第%s行Key数据为空,其余值全部填写同样的数据" % (sheetname, rowIndex + 1)
-                    rowdata.append(value)
+                value = "%s表第%s行Key数据为空,其余值全部填写同样的数据" % (sheetname, rowIndex + 1)
+                rowdata.append(value)
         else:
             for colIndex in real_data_col:
                 # exportType = _get_cell_data(worksheet, exportTypeRow, colIndex)
                 # if exportType.lower() == "s":
                 #     continue
                 # else:
-                    value = _get_cell_data(worksheet, rowIndex, colIndex)
-                    rowdata.append(value)
+                value = _get_cell_data(worksheet, rowIndex, colIndex)
+                rowdata.append(value)
         data_dic[rowIndex + 1] = rowdata
 
     sheet_data_dic["datadic"] = data_dic
@@ -119,7 +125,7 @@ def _read_excel_data(workbook, filename, sheetname, ismain, excel_data_dic={}):
 
 
 def readexcel(filename):
-    print ".......当前EXCEL : ", filename, "......."
+    LogCtrl.log(".......当前EXCEL : %s ......" % filename)
     pathFolder = os.path.abspath('.') + os.sep + "excelfile"
     # 获取整个工作簿
     workbook = xlrd.open_workbook(pathFolder + os.sep + filename, formatting_info=True, encoding_override="utf-8")
