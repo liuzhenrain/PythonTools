@@ -5,6 +5,7 @@
 """
 import xlrd
 import os
+import traceback
 
 commentRow = 0
 exportTypeRow = 1  # 输出类型所在行
@@ -39,14 +40,18 @@ def _read_excel_data(workbook, filename, sheetname, ismain, excel_data_dic={}):
     try:
         worksheet = workbook.sheet_by_name(sheetname)
     except:
+
         if ismain == True:
             print "文件名%s和主表名%s字不一致，请修改EXCEL文件" % (filename, sheetname)
             return excel_data_dic
         else:
             print "Excel文件:%s中没有%s这个表" % (filename, sheetname)
             return excel_data_dic
+        print traceback.format_exc()
+        exit()
     colcount = worksheet.ncols
     rowcount = worksheet.nrows
+    real_data_col =[] # 包含有实际内容的列数据
     # dicKey = "mainsheet"
     # if not ismain:
     dicKey = sheetname
@@ -55,21 +60,27 @@ def _read_excel_data(workbook, filename, sheetname, ismain, excel_data_dic={}):
     field_name_array = []
     field_type_array = []
     export_type = []
-    for colIndex in range(0, colcount):
-        exportType = _get_cell_data(worksheet, exportTypeRow, colIndex)
+
+    for colindex in range(colcount):
+        exportType = _get_cell_data(worksheet, exportTypeRow, colindex)
         if exportType.lower() == "s":
             continue
-        else:
-            export_type.append(exportType)
-            fieldType = _get_cell_data(worksheet, fieldTypeRow, colIndex)
-            fieldName = _get_cell_data(worksheet, fieldNameRow, colIndex)
-            field_name_array.append(fieldName)
-            field_type_array.append(fieldType)
+        fieldType = _get_cell_data(worksheet,fieldTypeRow,colindex)
+        fieldName = _get_cell_data(worksheet,fieldNameRow,colindex)
+        if fieldType == "" or fieldName == "":
+            continue
+        real_data_col.append(colindex)
+    for colIndex in real_data_col:
+        export_type.append(exportType)
+        fieldType = _get_cell_data(worksheet, fieldTypeRow, colIndex)
+        fieldName = _get_cell_data(worksheet, fieldNameRow, colIndex)
+        field_name_array.append(fieldName)
+        field_type_array.append(fieldType)
 
-            if fieldType[0] + fieldType[-1] == '[]':
-                fieldType = fieldType[1:-1]
-            if fieldType <> "int" and fieldType.lower() <> "string" and fieldType <> "float":
-                excel_data_dic = _read_excel_data(workbook, filename, fieldType, False, excel_data_dic)
+        if fieldType[0] + fieldType[-1] == '[]':
+            fieldType = fieldType[1:-1]
+        if fieldType <> "int" and fieldType.lower() <> "string" and fieldType <> "float":
+            excel_data_dic = _read_excel_data(workbook, filename, fieldType, False, excel_data_dic)
     fieldDic["fieldname"] = field_name_array
     fieldDic["fieldtype"] = field_type_array
     fieldDic["exporttype"] = export_type
@@ -84,19 +95,19 @@ def _read_excel_data(workbook, filename, sheetname, ismain, excel_data_dic={}):
         # 如果表中的第一个数据key为空值，直接跳过。
         if dataKey == "":
             print "%s表第%s行Key数据为空，直接跳过." % (sheetname, rowIndex + 1)
-            for colIndex in range(0, colcount):
-                fieldType = _get_cell_data(worksheet, exportTypeRow, colIndex)
-                if fieldType.lower() == "s":
-                    continue
-                else:
+            for colIndex in real_data_col:
+                # exportType = _get_cell_data(worksheet, exportTypeRow, colIndex)
+                # if exportType.lower() == "s":
+                #     continue
+                # else:
                     value = "%s表第%s行Key数据为空,其余值全部填写同样的数据" % (sheetname, rowIndex + 1)
                     rowdata.append(value)
         else:
-            for colIndex in range(0, colcount):
-                fieldType = _get_cell_data(worksheet, exportTypeRow, colIndex)
-                if fieldType.lower() == "s":
-                    continue
-                else:
+            for colIndex in real_data_col:
+                # exportType = _get_cell_data(worksheet, exportTypeRow, colIndex)
+                # if exportType.lower() == "s":
+                #     continue
+                # else:
                     value = _get_cell_data(worksheet, rowIndex, colIndex)
                     rowdata.append(value)
         data_dic[rowIndex + 1] = rowdata
