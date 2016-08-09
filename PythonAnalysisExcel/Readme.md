@@ -15,6 +15,7 @@
     
 ## Sqlite3相关
     1. cursor.execute("PRAGMA table_info('%s');" % (keyName)) 可以查询制定表的相关信息包括所有的字段名，字段类型
-        | cid | name | type | notnull | dflt_value | pk
-        --- | ---| --- |--- |---| ---
-        具体的数据|
+    
+        | cid | name | type | notnull | dflt_value | pk |
+        | --- | --- | --- | --- | --- | --- |
+        |具体的数据|具体的数据|具体的数据|具体的数据|具体的数据|具体的数据|

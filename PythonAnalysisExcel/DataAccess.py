@@ -106,6 +106,15 @@ def SaveToSqlite(databaseName, excel_data_dic={}):
                         except:
                             print traceback.format_exc()
                             conn.rollback()
+                    # 删除在EXCEL中没有但是数据库中有的指定行号的数据
+                    command_array = get_delete_command(keyName,excel_dic,has_unikey)
+                    if len(command_array) > 0:
+                        try:
+                            cursor.executescript("".join(command_array))
+                            conn.commit()
+                        except:
+                            print traceback.format_exc()
+                            conn.rollback()
         else:
             print "没有查询到%s 表" % (keyName)
             # 创建表
@@ -122,8 +131,7 @@ def SaveToSqlite(databaseName, excel_data_dic={}):
                 conn.rollback()
     cursor.close()
     _close_connection()
-    for command in sql_command_array:
-        print command
+    return sql_command_array
 
 
 def get_add_sqlcommand(tablename, excel_data_dic={}, has_unikey=False):
@@ -173,7 +181,6 @@ def get_update_command(tablename, excel_data_dic={}, has_unikey=False):
     field_name_array = (excel_data_dic["fielddic"])["fieldname"]
     cursor = _get_connection().cursor()
     origin_command = sql_command = "update %s set " % tablename
-    # 需要增加一个删除数据库中有但是EXCEL中没有的数据行
     for key in data_dic.keys():
         cursor.execute("select * from %s where rowindex = '%s'" % (tablename, key))
         rowdata = cursor.fetchone()  # 查询到的数据行数据
@@ -192,12 +199,8 @@ def get_update_command(tablename, excel_data_dic={}, has_unikey=False):
             if cmp(excel, sql.encode("utf-8")) != 0:
                 command += "unikey='%s'," % (excel_row_data[0] + '&' + excel_row_data[1])
         for index in range(0, len(excel_row_data)):
-            # print excel_row_data[index],rowdata[index+start_index]
-            # if excel_row_data[index] != unicode(rowdata[index + start_index]):
-            #     sql_command += "%s='%s'" % (field_name_array[index], excel_row_data[index])
             excel = excel_row_data[index]
             sql = rowdata[index + start_index]
-            # print excel,sql
             if cmp(excel, sql.encode("utf-8")) != 0:
                 command += "%s='%s'," % (field_name_array[index], excel_row_data[index])
         if len(command) != 0:
@@ -207,6 +210,23 @@ def get_update_command(tablename, excel_data_dic={}, has_unikey=False):
             command_array.append(sql_command)
             sql_command_array.append(sql_command)
         sql_command = origin_command
+    return command_array
+
+
+def get_delete_command(tablename, excel_data_dic={}, has_unikey=False):
+    global sql_command_array
+    command_array = []
+    origincommand = sqlcommand = "delete from %s where rowindex=" % tablename
+    data_dic = excel_data_dic["datadic"]
+    cursor = _get_connection().cursor()
+    cursor.execute("select rowindex from %s;" % tablename)
+    for item in cursor:
+        rowindex = item[0]
+        if not data_dic.has_key(rowindex):
+            sqlcommand += "'%s';" % rowindex
+            sql_command_array.append(sqlcommand)
+            command_array.append(sqlcommand)
+        sqlcommand = origincommand
     return command_array
 
 

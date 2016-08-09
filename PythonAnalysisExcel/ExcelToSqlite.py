@@ -46,10 +46,14 @@ def getFileList(path, wildcard, recursion):
 def main(folderPath):
     fileList = glob.glob1(folderPath, "*.xls")
 
+    sql_command_array = []
     for item in fileList:
         excel_data_dic = readexcel(item)
-        DataAccess.SaveToSqlite("steelray.db", excel_data_dic)
-        # exit()
+        sql_command_array += DataAccess.SaveToSqlite("steelray.db", excel_data_dic)
+    print "查询语句总条数:",len(sql_command_array)
+    command_file = open("commandFile", "w")
+    command_file.write("\n".join(sql_command_array))
+    command_file.close()
     return 0
 
 

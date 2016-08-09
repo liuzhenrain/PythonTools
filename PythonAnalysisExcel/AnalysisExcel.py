@@ -65,6 +65,7 @@ def _read_excel_data(workbook, filename, sheetname, ismain, excel_data_dic={}):
             fieldName = _get_cell_data(worksheet, fieldNameRow, colIndex)
             field_name_array.append(fieldName)
             field_type_array.append(fieldType)
+
             if fieldType[0] + fieldType[-1] == '[]':
                 fieldType = fieldType[1:-1]
             if fieldType <> "int" and fieldType.lower() <> "string" and fieldType <> "float":
