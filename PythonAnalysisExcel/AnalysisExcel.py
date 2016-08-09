@@ -90,7 +90,7 @@ def _read_excel_data(workbook, filename, sheetname, ismain, excel_data_dic={}):
             else:
                 value = _get_cell_data(worksheet, rowIndex, colIndex)
                 rowdata.append(value)
-        data_dic[rowIndex - dataStartRow] = rowdata
+        data_dic[rowIndex + 1] = rowdata
 
     sheet_data_dic["datadic"] = data_dic
 
