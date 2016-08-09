@@ -59,7 +59,7 @@ def SaveToSqlite(databaseName, excel_data_dic={}):
         cursor.execute("select sql from sqlite_master where name='%s' and type='table';" % keyName)
         sql_all = cursor.fetchall()
         if len(sql_all) > 0:
-            # print "查询到有%s表" % (keyName)
+            print "查询到有%s表" % (keyName)
             # 查询到了指定的表，那就可以开始进行数据比对工作
             # 首先比对列数是否一致。
             cursor.execute("PRAGMA table_info('%s');" % (keyName))
@@ -82,7 +82,7 @@ def SaveToSqlite(databaseName, excel_data_dic={}):
                     print traceback.format_exc()
                     conn.rollback()
             else:
-                # print "列数一致，进行数据比对"
+                print "列数一致，进行数据比对"
                 cursor.execute("select count(*) from %s;" % (keyName))
                 values = cursor.fetchone()
                 count = values[0]
@@ -96,7 +96,7 @@ def SaveToSqlite(databaseName, excel_data_dic={}):
                         print traceback.format_exc()
                         conn.rollback()
                 else:
-                    # print "数据表中有数据", count
+                    print "数据表中有数据", count
                     # 数据表中有数据，对每行数据进行比对，通过rowindex
                     command_array = get_update_command(keyName, excel_dic, has_unikey)
                     if len(command_array) > 0:
@@ -107,14 +107,16 @@ def SaveToSqlite(databaseName, excel_data_dic={}):
                             print traceback.format_exc()
                             conn.rollback()
         else:
-            # print "没有查询到%s 表" % (keyName)
+            print "没有查询到%s 表" % (keyName)
             # 创建表
             try:
                 # print "创建表", sqlcommand
                 sql_command_array.append(sqlcommand)
                 cursor.execute(sqlcommand)
                 conn.commit()
-                get_add_sqlcommand(keyName, excel_dic, has_unikey)
+                command_array = get_add_sqlcommand(keyName, excel_dic, has_unikey)
+                cursor.executescript("".join(command_array))
+                conn.commit()
             except:
                 print traceback.format_exc()
                 conn.rollback()
@@ -171,9 +173,11 @@ def get_update_command(tablename, excel_data_dic={}, has_unikey=False):
     field_name_array = (excel_data_dic["fielddic"])["fieldname"]
     cursor = _get_connection().cursor()
     origin_command = sql_command = "update %s set " % tablename
+    # 需要增加一个删除数据库中有但是EXCEL中没有的数据行
     for key in data_dic.keys():
         cursor.execute("select * from %s where rowindex = '%s'" % (tablename, key))
         rowdata = cursor.fetchone()  # 查询到的数据行数据
+        # if rowdata == None: # 没有找到对应rowindex的数据
         excel_row_data = data_dic[key]  # excel当中的行数据
         start_index = 1
 
@@ -186,7 +190,7 @@ def get_update_command(tablename, excel_data_dic={}, has_unikey=False):
             excel = excel_row_data[0] + "&" + excel_row_data[1]
             sql = rowdata[1]
             if cmp(excel, sql.encode("utf-8")) != 0:
-                command += "unikey='%s' " % (excel_row_data[0] + '&' + excel_row_data[1])
+                command += "unikey='%s'," % (excel_row_data[0] + '&' + excel_row_data[1])
         for index in range(0, len(excel_row_data)):
             # print excel_row_data[index],rowdata[index+start_index]
             # if excel_row_data[index] != unicode(rowdata[index + start_index]):
@@ -195,8 +199,9 @@ def get_update_command(tablename, excel_data_dic={}, has_unikey=False):
             sql = rowdata[index + start_index]
             # print excel,sql
             if cmp(excel, sql.encode("utf-8")) != 0:
-                command += "%s='%s'" % (field_name_array[index], excel_row_data[index])
+                command += "%s='%s'," % (field_name_array[index], excel_row_data[index])
         if len(command) != 0:
+            command = command[0:-1]
             sql_command += command
             sql_command += " where rowindex = %s;" % key
             command_array.append(sql_command)

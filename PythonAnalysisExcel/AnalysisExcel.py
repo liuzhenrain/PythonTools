@@ -21,6 +21,7 @@ def _get_cell_data(sheet, row, col):
         return sheet.cell_value(row, col).encode('utf-8')
     else:
         return str(sheet.cell_value(row, col))
+    # return (sheet.cell_value(row, col) + "").encode('utf-8')
 
 
 # 读取excel数据，会返回两个个字典。
@@ -82,14 +83,21 @@ def _read_excel_data(workbook, filename, sheetname, ismain, excel_data_dic={}):
         # 如果表中的第一个数据key为空值，直接跳过。
         if dataKey == "":
             print "%s表第%s行Key数据为空，直接跳过." % (sheetname, rowIndex + 1)
-            continue
-        for colIndex in range(0, colcount):
-            fieldType = _get_cell_data(worksheet, exportTypeRow, colIndex)
-            if fieldType.lower() == "s":
-                continue
-            else:
-                value = _get_cell_data(worksheet, rowIndex, colIndex)
-                rowdata.append(value)
+            for colIndex in range(0, colcount):
+                fieldType = _get_cell_data(worksheet, exportTypeRow, colIndex)
+                if fieldType.lower() == "s":
+                    continue
+                else:
+                    value = "%s表第%s行Key数据为空,其余值全部填写同样的数据" % (sheetname, rowIndex + 1)
+                    rowdata.append(value)
+        else:
+            for colIndex in range(0, colcount):
+                fieldType = _get_cell_data(worksheet, exportTypeRow, colIndex)
+                if fieldType.lower() == "s":
+                    continue
+                else:
+                    value = _get_cell_data(worksheet, rowIndex, colIndex)
+                    rowdata.append(value)
         data_dic[rowIndex + 1] = rowdata
 
     sheet_data_dic["datadic"] = data_dic
@@ -106,5 +114,5 @@ def readexcel(filename):
     excel_data_dic = {}
     main_sheet_name = str(filename).replace(".xls", "")
     excel_data_dic = _read_excel_data(workbook, filename, main_sheet_name, True, excel_data_dic)
-    print "获得的数据KEYS个数:%s" % len(excel_data_dic.keys())
+    # print "获得的数据KEYS个数:%s" % len(excel_data_dic.keys())
     return excel_data_dic
