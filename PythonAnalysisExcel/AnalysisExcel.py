@@ -74,7 +74,7 @@ def _read_excel_data(workbook, filename, sheetname, ismain, excel_data_dic={}):
             continue
         real_data_col.append(colindex)
     if len(real_data_col) == 1:
-        LogCtrl.log("只有一个KEY值需要写入到客户端数据库,所以直接跳过。")
+        LogCtrl.log("Excel文件:%s %s表只有一个KEY值需要写入到客户端数据库,所以直接跳过。" % (filename, sheetname))
         return excel_data_dic
     for colIndex in real_data_col:
         export_type.append(exportType)
