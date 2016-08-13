@@ -28,11 +28,12 @@ def _get_cell_data(sheet, row, col):
 
 # 读取excel数据，会返回两个个字典。
 # sheet_data_dic 字典数据组成:
-#           key:[subsheetname],value:{fieldDic:{fieldname:array,fieldtype:fieldType},dataDic:{rowIndex:array},exporttype:array}
+#           key:[heetname],value:{fieldDic:{fieldname:array,fieldtype:fieldType},dataDic:{rowIndex:array},exporttype:array}
 # fieldDic 字典数据组成:
 #           key:fieldname,value:Array
 #           key:fieldtype,value:Array
 #           key:exporttype,value:Array
+#           key:fieldDesc,value:Array
 
 def _read_excel_data(workbook, filename, sheetname, ismain, excel_data_dic={}):
     # 此字典用于保存所有的数据,数据结构参照方法注释
@@ -63,6 +64,7 @@ def _read_excel_data(workbook, filename, sheetname, ismain, excel_data_dic={}):
     field_name_array = []
     field_type_array = []
     export_type = []
+    field_desc_array = []
 
     for colindex in range(colcount):
         exportType = _get_cell_data(worksheet, exportTypeRow, colindex)
@@ -80,8 +82,10 @@ def _read_excel_data(workbook, filename, sheetname, ismain, excel_data_dic={}):
         export_type.append(exportType)
         fieldType = _get_cell_data(worksheet, fieldTypeRow, colIndex)
         fieldName = _get_cell_data(worksheet, fieldNameRow, colIndex)
+        fieldDesc = _get_cell_data(worksheet, commentRow, colIndex)
         field_name_array.append(fieldName)
         field_type_array.append(fieldType)
+        field_desc_array.append(fieldDesc)
 
         if fieldType[0] + fieldType[-1] == '[]':
             fieldType = fieldType[1:-1]
@@ -89,6 +93,7 @@ def _read_excel_data(workbook, filename, sheetname, ismain, excel_data_dic={}):
             excel_data_dic = _read_excel_data(workbook, filename, fieldType, False, excel_data_dic)
     fieldDic["fieldname"] = field_name_array
     fieldDic["fieldtype"] = field_type_array
+    fieldDic["fielddesc"] = field_desc_array
     fieldDic["exporttype"] = export_type
     # # 将字段信息记录到字典中
     sheet_data_dic["fielddic"] = fieldDic
@@ -119,7 +124,7 @@ def _read_excel_data(workbook, filename, sheetname, ismain, excel_data_dic={}):
         data_dic[rowIndex + 1] = rowdata
 
     sheet_data_dic["datadic"] = data_dic
-
+    sheet_data_dic["ismain"] = ismain
     excel_data_dic[dicKey] = sheet_data_dic
     return excel_data_dic
 

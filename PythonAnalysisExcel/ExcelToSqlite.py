@@ -12,6 +12,7 @@ import glob
 from AnalysisExcel import *
 import DataAccess
 import LogCtrl
+from CreateCS import *
 
 # Excel存储目录
 pathFolder = ""
@@ -54,6 +55,7 @@ def main(folderPath):
     for item in fileList:
         excel_data_dic = readexcel(item)
         sql_command_array += DataAccess.SaveToSqlite("steelray.db", excel_data_dic)
+        create_csfile(folderPath+os.sep+"csfiles",excel_data_dic)
     print "查询语句总条数:", len(sql_command_array)
     command_file = open("commandFile.txt", "a")
     command_file.write("\n".join(sql_command_array))
