@@ -12,7 +12,7 @@ import glob
 from AnalysisExcel import *
 import DataAccess
 import LogCtrl
-from CreateCS import *
+from ccsf import *
 
 # Excel存储目录
 pathFolder = ""
@@ -51,15 +51,17 @@ def main(folderPath):
     sql_command_array = []
     # for item in globfiles:
     #     print item,os.path.getmtime(item)
-
+    sql_count = 0
     for item in fileList:
         excel_data_dic = readexcel(item)
-        sql_command_array += DataAccess.SaveToSqlite("steelray.db", excel_data_dic)
-        create_csfile(folderPath+os.sep+"csfiles",excel_data_dic)
-    print "查询语句总条数:", len(sql_command_array)
-    command_file = open("commandFile.txt", "a")
-    command_file.write("\n".join(sql_command_array))
-    command_file.close()
+        sql_command_array = DataAccess.SaveToSqlite("steelray.db", excel_data_dic)
+        create_csfile(folderPath + os.sep + "csfiles", excel_data_dic)
+        command_file = open("commandFile.txt", "a")
+        command_file.write("\n".join(sql_command_array))
+        command_file.close()
+        sql_count += len(sql_command_array)
+        sql_command_array = []
+    print "查询语句总条数:", sql_count
     LogCtrl.write_log_file()
     return 0
 
