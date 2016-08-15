@@ -82,6 +82,7 @@ def _read_excel_data(workbook, filename, sheetname, ismain, excel_data_dic={}):
     #     LogCtrl.log("Excel文件:%s %s表只有一个KEY值需要写入到客户端数据库,所以直接跳过。" % (filename, sheetname))
     #     return excel_data_dic
     for colIndex in real_data_col:
+        exportType = _get_cell_data(worksheet, exportTypeRow, colindex)
         export_type.append(exportType)
         fieldType = _get_cell_data(worksheet, fieldTypeRow, colIndex)
         fieldName = _get_cell_data(worksheet, fieldNameRow, colIndex)

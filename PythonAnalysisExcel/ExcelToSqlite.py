@@ -51,6 +51,16 @@ def main(folderPath):
     sql_command_array = []
     # for item in globfiles:
     #     print item,os.path.getmtime(item)
+    has_commandfile=False
+    if os.path.exists("commandFiles"):
+        print "已经有了command文件了"
+    else:
+        print "还没有command文件"
+        has_commandfile = False
+    if len(os.listdir("commandFiles")) > 0:
+        print "还没有command文件22"
+        has_commandfile = True
+    exit()
     sql_count = 0
     for item in fileList:
         excel_data_dic = readexcel(item)
