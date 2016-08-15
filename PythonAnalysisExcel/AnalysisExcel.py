@@ -70,6 +70,9 @@ def _read_excel_data(workbook, filename, sheetname, ismain, excel_data_dic={}):
         exportType = _get_cell_data(worksheet, exportTypeRow, colindex)
         if exportType.lower() == "s":
             continue
+        # 除了第一列导出类型为n的保留，其他的都直接剔除
+        if colindex > 0 and exportType.lower() == "n":
+            continue
         fieldType = _get_cell_data(worksheet, fieldTypeRow, colindex)
         fieldName = _get_cell_data(worksheet, fieldNameRow, colindex)
         if fieldType == "" or fieldName == "":
@@ -83,7 +86,7 @@ def _read_excel_data(workbook, filename, sheetname, ismain, excel_data_dic={}):
         fieldType = _get_cell_data(worksheet, fieldTypeRow, colIndex)
         fieldName = _get_cell_data(worksheet, fieldNameRow, colIndex)
         fieldDesc = _get_cell_data(worksheet, commentRow, colIndex)
-        field_name_array.append(fieldName)
+        field_name_array.append(str(fieldName).lower())  # 在数据库中都会转化为小写的，所以在这里直接将其转换成小写
         field_type_array.append(fieldType)
         field_desc_array.append(fieldDesc)
 
