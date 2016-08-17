@@ -13,6 +13,7 @@ from AnalysisExcel import *
 import DataAccess
 import LogCtrl
 from ccsf import *
+import time
 
 # Excel存储目录
 pathFolder = ""
@@ -51,24 +52,43 @@ def main(folderPath):
     sql_command_array = []
     # for item in globfiles:
     #     print item,os.path.getmtime(item)
-    has_commandfile=False
+    has_commandfile = False
+    has_db = False
     if os.path.exists("commandFiles"):
         print "已经有了command文件了"
     else:
         print "还没有command文件"
+        os.mkdir("commandFiles")
         has_commandfile = False
-    if len(os.listdir("commandFiles")) > 0:
-        print "还没有command文件22"
-        has_commandfile = True
-    exit()
+    # if len(os.listdir("commandFiles")) > 0:
+    #     print "还没有command文件22"
+    #     has_commandfile = True
+    if not os.path.exists("steelray.db"):
+        has_db = False
+    else:
+        has_db = True
+
+    ticks = time.time()
+    localtime = time.localtime(ticks)
+    timestr = "-".join([str(localtime.tm_year), str(localtime.tm_mon), str(localtime.tm_mday)])
+    print timestr
     sql_count = 0
+
+    if not os.path.exists("commandFiles/commandFile(%s).txt" % timestr):
+        file_list = open("commandFiles/filelist.txt", "a")
+        file_list.write("commandFile(%s).txt\n" % timestr)
+        file_list.close()
+
     for item in fileList:
         excel_data_dic = readexcel(item)
         sql_command_array = DataAccess.SaveToSqlite("steelray.db", excel_data_dic)
         create_csfile(folderPath + os.sep + "csfiles", excel_data_dic)
-        command_file = open("commandFile.txt", "a")
-        command_file.write("\n".join(sql_command_array))
-        command_file.close()
+        # 防止第一次导入数据库时生成超大SQL文件
+        if has_db:
+            command_file = open("commandFiles/commandFile(%s).txt" % timestr, "a")
+            command_file.write("\n".join(sql_command_array))
+            command_file.write("\n")
+            command_file.close()
         sql_count += len(sql_command_array)
         sql_command_array = []
     print "查询语句总条数:", sql_count
