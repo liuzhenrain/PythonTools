@@ -8,6 +8,7 @@ import traceback
 
 dataName = ""
 connection = None
+log_sql_command = False
 # 记录所有的SQL操作语句（增删改），并且将其写入到文件当中
 sql_command_array = []
 
@@ -25,13 +26,15 @@ def check_unikey(export_type=[]):
     return has_unikey, keycount
 
 
-def SaveToSqlite(databaseName, excel_data_dic={}):
+def SaveToSqlite(databaseName, excel_data_dic={}, return_command = False):
     global dataName
     dataName = databaseName
     conn = _get_connection()
     cursor = conn.cursor()
     # 记录所有的SQL操作语句（增删改），并且将其写入到文件当中
     global sql_command_array
+    global log_sql_command
+    log_sql_command = return_command
     sql_command_array = []
     for keyName in excel_data_dic.keys():
         # keyname 即为表名
@@ -52,6 +55,7 @@ def SaveToSqlite(databaseName, excel_data_dic={}):
         has_unikey, keycount = check_unikey(export_type)
         if has_unikey:
             sqlcommand += " `unikey` text,"
+            print "%s表有unikey,且拼合列总数为:%s" % (keyName, keycount)
             # 有unikey列，列总数加上一行
             sql_table_ncols += 1
             # has_unikey = True
@@ -83,12 +87,14 @@ def SaveToSqlite(databaseName, excel_data_dic={}):
                 # 查询出来的列数不一致，先删除表，然后创建表
                 try:
                     # 删除表
-                    sql_command_array.append("drop table `%s`;" % (keyName))
+                    if log_sql_command:
+                        sql_command_array.append("drop table `%s`;" % (keyName))
                     cursor.execute("drop table `%s`;" % (keyName))
                     # 创建表
                     # print "创建表", sqlcommand
                     cursor.execute(sqlcommand)
-                    sql_command_array.append(sqlcommand)
+                    if log_sql_command:
+                        sql_command_array.append(sqlcommand)
                     command_array = get_add_sqlcommand(keyName, excel_dic, has_unikey, keycount)
                     cursor.executescript("".join(command_array))
                     conn.commit()
@@ -112,7 +118,7 @@ def SaveToSqlite(databaseName, excel_data_dic={}):
                 else:
                     # print "数据表中有数据", count
                     # 数据表中有数据，对每行数据进行比对，通过rowindex
-                    command_array = get_update_command(keyName, excel_dic, has_unikey)
+                    command_array = get_update_command(keyName, excel_dic, has_unikey, keycount)
                     if len(command_array) > 0:
                         try:
                             cursor.executescript("".join(command_array))
@@ -134,7 +140,8 @@ def SaveToSqlite(databaseName, excel_data_dic={}):
             # 创建表
             try:
                 # print "创建表", sqlcommand
-                sql_command_array.append(sqlcommand)
+                if log_sql_command:
+                    sql_command_array.append(sqlcommand)
                 cursor.execute(sqlcommand)
                 conn.commit()
                 command_array = get_add_sqlcommand(keyName, excel_dic, has_unikey, keycount)
@@ -150,6 +157,7 @@ def SaveToSqlite(databaseName, excel_data_dic={}):
 
 def get_add_sqlcommand(tablename, excel_data_dic={}, has_unikey=False, keycount=0):
     global sql_command_array
+    global log_sql_command
     command_array = []
     # print "开始产生数据库增加语句"
     sqlcommand = "insert into %s (rowindex," % tablename
@@ -185,14 +193,16 @@ def get_add_sqlcommand(tablename, excel_data_dic={}, has_unikey=False, keycount=
             sqlcommand += (",'" + "_".join(unikey_array) + "'")
         sqlcommand += ");"
         command_array.append(sqlcommand)
-        sql_command_array.append(sqlcommand)
+        if log_sql_command:
+            sql_command_array.append(sqlcommand)
         # 将语句恢复到进入循环之前的状态
         sqlcommand = origin_command
     return command_array
 
 
-def get_update_command(tablename, excel_data_dic={}, has_unikey=False, keycount =0):
+def get_update_command(tablename, excel_data_dic={}, has_unikey=False, keycount=0):
     global sql_command_array
+    global log_sql_command
     command_array = []
     data_dic = excel_data_dic["datadic"]
     field_name_array = (excel_data_dic["fielddic"])["fieldname"]
@@ -211,7 +221,7 @@ def get_update_command(tablename, excel_data_dic={}, has_unikey=False, keycount 
 
         if has_unikey:
             start_index = 2
-            unikeyarray=[]
+            unikeyarray = []
             for i in range(keycount):
                 unikeyarray.append(str(excel_row_data[i]))
             excel = "_".join(unikeyarray)
@@ -228,13 +238,15 @@ def get_update_command(tablename, excel_data_dic={}, has_unikey=False, keycount 
             sql_command += command
             sql_command += " where `rowindex` = %s;" % key
             command_array.append(sql_command)
-            sql_command_array.append(sql_command)
+            if log_sql_command:
+                sql_command_array.append(sql_command)
         sql_command = origin_command
     return command_array
 
 
-def get_delete_command(tablename, excel_data_dic={}, has_unikey=False,keycount =0):
+def get_delete_command(tablename, excel_data_dic={}, has_unikey=False, keycount=0):
     global sql_command_array
+    global log_sql_command
     command_array = []
     origincommand = sqlcommand = "delete from `%s` where `rowindex`=" % tablename
     data_dic = excel_data_dic["datadic"]
@@ -244,7 +256,8 @@ def get_delete_command(tablename, excel_data_dic={}, has_unikey=False,keycount =
         rowindex = item[0]
         if not data_dic.has_key(rowindex):
             sqlcommand += "'%s';" % rowindex
-            sql_command_array.append(sqlcommand)
+            if log_sql_command:
+                sql_command_array.append(sqlcommand)
             command_array.append(sqlcommand)
         sqlcommand = origincommand
     return command_array

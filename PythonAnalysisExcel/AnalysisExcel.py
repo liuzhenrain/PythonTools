@@ -26,6 +26,21 @@ def _get_cell_data(sheet, row, col):
         # return (sheet.cell_value(row, col) + "").encode('utf-8')
 
 
+def parseValue(vType, value):
+    '''
+    处理数据类型转换
+    '''
+    if vType == 'int' and value == '':
+        value = 0
+    elif vType == 'int' and value <> '':
+        value = int(float(value))
+    elif vType == 'float' and value == '':
+        value = float(0)
+    elif vType == 'float' and value <> '':
+        value = float(value)
+    return value
+
+
 # 读取excel数据，会返回两个个字典。
 # sheet_data_dic 字典数据组成:
 #           key:[heetname],value:{fieldDic:{fieldname:array,fieldtype:fieldType},dataDic:{rowIndex:array},exporttype:array}
@@ -63,7 +78,7 @@ def _read_excel_data(workbook, filename, sheetname, ismain, excel_data_dic={}):
     fieldDic = {}  # 记录所有的字段名以及字段类型,去掉导出类型为S的部分
     field_name_array = []
     field_type_array = []
-    export_type = []
+    export_type_array = []
     field_desc_array = []
 
     for colindex in range(colcount):
@@ -82,8 +97,8 @@ def _read_excel_data(workbook, filename, sheetname, ismain, excel_data_dic={}):
     #     LogCtrl.log("Excel文件:%s %s表只有一个KEY值需要写入到客户端数据库,所以直接跳过。" % (filename, sheetname))
     #     return excel_data_dic
     for colIndex in real_data_col:
-        exportType = _get_cell_data(worksheet, exportTypeRow, colindex)
-        export_type.append(exportType)
+        exportType = _get_cell_data(worksheet, exportTypeRow, colIndex)
+        export_type_array.append(exportType)
         fieldType = _get_cell_data(worksheet, fieldTypeRow, colIndex)
         fieldName = _get_cell_data(worksheet, fieldNameRow, colIndex)
         fieldDesc = _get_cell_data(worksheet, commentRow, colIndex)
@@ -98,7 +113,7 @@ def _read_excel_data(workbook, filename, sheetname, ismain, excel_data_dic={}):
     fieldDic["fieldname"] = field_name_array
     fieldDic["fieldtype"] = field_type_array
     fieldDic["fielddesc"] = field_desc_array
-    fieldDic["exporttype"] = export_type
+    fieldDic["exporttype"] = export_type_array
     # # 将字段信息记录到字典中
     sheet_data_dic["fielddic"] = fieldDic
 
@@ -107,6 +122,7 @@ def _read_excel_data(workbook, filename, sheetname, ismain, excel_data_dic={}):
     for rowIndex in range(dataStartRow, rowcount):
         rowdata = []
         dataKey = _get_cell_data(worksheet, rowIndex, 0)
+
         # 如果表中的第一个数据key为空值，直接跳过。
         if dataKey == "":
             LogCtrl.log("%s表第%s行Key数据为空，直接跳过." % (sheetname, rowIndex + 1))
@@ -123,7 +139,9 @@ def _read_excel_data(workbook, filename, sheetname, ismain, excel_data_dic={}):
                 # if exportType.lower() == "s":
                 #     continue
                 # else:
+                datatype = _get_cell_data(worksheet, fieldTypeRow, colIndex)
                 value = _get_cell_data(worksheet, rowIndex, colIndex)
+                value = parseValue(datatype, value)
                 rowdata.append(value)
         data_dic[rowIndex + 1] = rowdata
 

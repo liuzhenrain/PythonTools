@@ -52,17 +52,9 @@ def main(folderPath):
     sql_command_array = []
     # for item in globfiles:
     #     print item,os.path.getmtime(item)
-    has_commandfile = False
+
     has_db = False
-    if os.path.exists("commandFiles"):
-        print "已经有了command文件了"
-    else:
-        print "还没有command文件"
-        os.mkdir("commandFiles")
-        has_commandfile = False
-    # if len(os.listdir("commandFiles")) > 0:
-    #     print "还没有command文件22"
-    #     has_commandfile = True
+
     if not os.path.exists("steelray.db"):
         has_db = False
     else:
@@ -74,19 +66,28 @@ def main(folderPath):
     print timestr
     sql_count = 0
 
-    if not os.path.exists("commandFiles/commandFile(%s).txt" % timestr):
+    if os.path.exists("commandFiles"):
+        print "已经有了command文件了"
+    else:
+        print "还没有command文件"
+        os.mkdir("commandFiles")
+
+    if not os.path.exists("commandFiles/commandFile(%s).txt" % timestr) and has_db:
         file_list = open("commandFiles/filelist.txt", "a")
-        file_list.write("commandFile(%s).txt\n" % timestr)
+        file_list.write("commandFile(%s).zip\n" % timestr)
         file_list.close()
 
+
     for item in fileList:
+        if not item.__contains__("weapon_reform_attr_1"):
+            continue
         excel_data_dic = readexcel(item)
-        sql_command_array = DataAccess.SaveToSqlite("steelray.db", excel_data_dic)
+        sql_command_array = DataAccess.SaveToSqlite("steelray.db", excel_data_dic, has_db)
         create_csfile(folderPath + os.sep + "csfiles", excel_data_dic)
         # 防止第一次导入数据库时生成超大SQL文件
         if has_db:
             command_file = open("commandFiles/commandFile(%s).txt" % timestr, "a")
-            command_file.write("\n".join(sql_command_array))
+            command_file.write("".join(sql_command_array))
             command_file.write("\n")
             command_file.close()
         sql_count += len(sql_command_array)
