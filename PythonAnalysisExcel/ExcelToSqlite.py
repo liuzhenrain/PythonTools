@@ -14,6 +14,7 @@ import DataAccess
 import LogCtrl
 from ccsf import *
 import time
+import threading
 
 # Excel存储目录
 pathFolder = ""
@@ -76,14 +77,21 @@ def main(folderPath):
         file_list = open("commandFiles/filelist.txt", "a")
         file_list.write("commandFile(%s).zip\n" % timestr)
         file_list.close()
-
+    threads = []
+    t1 = threading.Thread(target=create_macro_file, args=(folderPath,))
+    threads.append(t1)
+    t1.start()
+    # create_macro_file(folderPath)
 
     for item in fileList:
-        if not item.__contains__("weapon_reform_attr_1"):
-            continue
+        # if not item.__contains__("weapon_reform_attr_1"):
+        #     continue
         excel_data_dic = readexcel(item)
+        t2 = threading.Thread(target=create_csfile, args=(folderPath + os.sep + "Structs", excel_data_dic,))
+        threads.append(t2)
+        t2.start()
         sql_command_array = DataAccess.SaveToSqlite("steelray.db", excel_data_dic, has_db)
-        create_csfile(folderPath + os.sep + "csfiles", excel_data_dic)
+        # create_csfile(folderPath + os.sep + "csfiles", excel_data_dic)
         # 防止第一次导入数据库时生成超大SQL文件
         if has_db:
             command_file = open("commandFiles/commandFile(%s).txt" % timestr, "a")
@@ -94,7 +102,8 @@ def main(folderPath):
         sql_command_array = []
     print "查询语句总条数:", sql_count
     LogCtrl.write_log_file()
-    return 0
+    for item in threads:
+        item.join()
 
 
 if __name__ == "__main__":

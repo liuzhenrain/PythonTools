@@ -15,7 +15,20 @@ fieldNameRow = 3
 dataStartRow = 4
 
 
-def _get_cell_data(sheet, row, col):
+def capitalizeName(value):
+    '''
+    大写化字符串
+    sys_config -> SysConfig
+    config -> Config
+    '''
+    values = value.split('_')
+    newValue = ''
+    for v in values:
+        newValue = '%s%s' % (newValue, v.capitalize())
+    return newValue
+
+
+def get_cell_data(sheet, row, col):
     if row > sheet.nrows or col > sheet.ncols:
         return ""
     datatype = sheet.cell_type(row, col)
@@ -41,7 +54,7 @@ def parseValue(vType, value):
     return value
 
 
-# 读取excel数据，会返回两个个字典。
+# 读取excel数据，会返回两个个字典。这个方法只会返回客户端保存到sqlite当中的数据，以及需要写入cs文件的相关信息
 # sheet_data_dic 字典数据组成:
 #           key:[heetname],value:{fieldDic:{fieldname:array,fieldtype:fieldType},dataDic:{rowIndex:array},exporttype:array}
 # fieldDic 字典数据组成:
@@ -82,14 +95,14 @@ def _read_excel_data(workbook, filename, sheetname, ismain, excel_data_dic={}):
     field_desc_array = []
 
     for colindex in range(colcount):
-        exportType = _get_cell_data(worksheet, exportTypeRow, colindex)
+        exportType = get_cell_data(worksheet, exportTypeRow, colindex)
         if exportType.lower() == "s":
             continue
         # 除了第一列导出类型为n的保留，其他的都直接剔除
         if colindex > 0 and exportType.lower() == "n":
             continue
-        fieldType = _get_cell_data(worksheet, fieldTypeRow, colindex)
-        fieldName = _get_cell_data(worksheet, fieldNameRow, colindex)
+        fieldType = get_cell_data(worksheet, fieldTypeRow, colindex)
+        fieldName = get_cell_data(worksheet, fieldNameRow, colindex)
         if fieldType == "" or fieldName == "":
             continue
         real_data_col.append(colindex)
@@ -97,12 +110,12 @@ def _read_excel_data(workbook, filename, sheetname, ismain, excel_data_dic={}):
     #     LogCtrl.log("Excel文件:%s %s表只有一个KEY值需要写入到客户端数据库,所以直接跳过。" % (filename, sheetname))
     #     return excel_data_dic
     for colIndex in real_data_col:
-        exportType = _get_cell_data(worksheet, exportTypeRow, colIndex)
+        exportType = get_cell_data(worksheet, exportTypeRow, colIndex)
         export_type_array.append(exportType)
-        fieldType = _get_cell_data(worksheet, fieldTypeRow, colIndex)
-        fieldName = _get_cell_data(worksheet, fieldNameRow, colIndex)
-        fieldDesc = _get_cell_data(worksheet, commentRow, colIndex)
-        field_name_array.append(str(fieldName).lower())  # 在数据库中都会转化为小写的，所以在这里直接将其转换成小写
+        fieldType = get_cell_data(worksheet, fieldTypeRow, colIndex)
+        fieldName = get_cell_data(worksheet, fieldNameRow, colIndex)
+        fieldDesc = get_cell_data(worksheet, commentRow, colIndex)
+        field_name_array.append(fieldName)
         field_type_array.append(fieldType)
         field_desc_array.append(fieldDesc)
 
@@ -121,13 +134,13 @@ def _read_excel_data(workbook, filename, sheetname, ismain, excel_data_dic={}):
     data_dic = {}
     for rowIndex in range(dataStartRow, rowcount):
         rowdata = []
-        dataKey = _get_cell_data(worksheet, rowIndex, 0)
+        dataKey = get_cell_data(worksheet, rowIndex, 0)
 
         # 如果表中的第一个数据key为空值，直接跳过。
         if dataKey == "":
             LogCtrl.log("%s表第%s行Key数据为空，直接跳过." % (sheetname, rowIndex + 1))
             for colIndex in real_data_col:
-                # exportType = _get_cell_data(worksheet, exportTypeRow, colIndex)
+                # exportType = get_cell_data(worksheet, exportTypeRow, colIndex)
                 # if exportType.lower() == "s":
                 #     continue
                 # else:
@@ -135,12 +148,12 @@ def _read_excel_data(workbook, filename, sheetname, ismain, excel_data_dic={}):
                 rowdata.append(value)
         else:
             for colIndex in real_data_col:
-                # exportType = _get_cell_data(worksheet, exportTypeRow, colIndex)
+                # exportType = get_cell_data(worksheet, exportTypeRow, colIndex)
                 # if exportType.lower() == "s":
                 #     continue
                 # else:
-                datatype = _get_cell_data(worksheet, fieldTypeRow, colIndex)
-                value = _get_cell_data(worksheet, rowIndex, colIndex)
+                datatype = get_cell_data(worksheet, fieldTypeRow, colIndex)
+                value = get_cell_data(worksheet, rowIndex, colIndex)
                 value = parseValue(datatype, value)
                 rowdata.append(value)
         data_dic[rowIndex + 1] = rowdata
@@ -151,11 +164,19 @@ def _read_excel_data(workbook, filename, sheetname, ismain, excel_data_dic={}):
     return excel_data_dic
 
 
+def get_workbook(path):
+    workbook = None
+    if os.path.exists(path):
+        workbook = xlrd.open_workbook(path,formatting_info=True,encoding_override="utf-8")
+    return workbook
+
+
 def readexcel(filename):
     LogCtrl.log(".......当前EXCEL : %s ......" % filename)
     pathFolder = os.path.abspath('.') + os.sep + "excelfile"
     # 获取整个工作簿
-    workbook = xlrd.open_workbook(pathFolder + os.sep + filename, formatting_info=True, encoding_override="utf-8")
+    workbook = get_workbook(pathFolder+os.sep+filename)
+    # workbook = xlrd.open_workbook(pathFolder + os.sep + filename, formatting_info=True, encoding_override="utf-8")
     excel_data_dic = {}
     main_sheet_name = str(filename).replace(".xls", "")
     excel_data_dic = _read_excel_data(workbook, filename, main_sheet_name, True, excel_data_dic)

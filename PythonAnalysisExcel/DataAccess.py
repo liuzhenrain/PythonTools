@@ -64,7 +64,7 @@ def SaveToSqlite(databaseName, excel_data_dic={}, return_command = False):
 
         field_name_len = len(field_name_array)
         for i in range(field_name_len):
-            field_name = str(field_name_array[i]).lower()
+            field_name = str(field_name_array[i])
             # if field_name == "index":
             #     field_name = "e_index"
             sqlcommand += ("`" + field_name + "` text")
@@ -166,7 +166,7 @@ def get_add_sqlcommand(tablename, excel_data_dic={}, has_unikey=False, keycount=
     field_name_array = field_dic["fieldname"]
     field_name_len = len(field_name_array)
     for i in range(field_name_len):
-        field_name = str(field_name_array[i]).lower()
+        field_name = str(field_name_array[i])
         # if field_name == "index":
         #     field_name = "e_index"
         sqlcommand += ("`" + field_name + "`")
