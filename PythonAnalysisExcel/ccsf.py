@@ -53,13 +53,6 @@ namespace Philip.Sqlite.DataStruct\n\
     \t///\n\t\
     internal new string defaultcolumn="%s";\n\
 ''' % (class_name, class_name, class_name, sheet_name, field_name_array[0])
-    # count = len(field_dic["fieldname"])
-    # field_name_array = field_dic["fieldname"]
-    # field_type_array = field_dic["fieldtype"]
-    # field_desc_array = field_dic["fielddesc"]
-    # field_export_array = field_dic["exporttype"]
-    # field_text = []
-    # method_text = []
     if has_unikey:
         unikey_text = "\t    ///\n\t    /// 组合键\n\t    ///\n\t    public string unikey;"
         field_text.append(unikey_text)

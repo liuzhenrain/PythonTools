@@ -6,8 +6,7 @@
 """
 import sqlite3
 import traceback
-
-from PythonAnalysisExcel import LogCtrl
+import LogCtrl
 
 dataName = ""
 connection = None
