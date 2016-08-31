@@ -1,20 +1,16 @@
+#!/usr/bin/env python
 # coding: utf-8
 """
 Created on 2016/7/26
 @author: liuzhenrain
 """
 
-from __future__ import division
-
-import os
 import glob
-# import AnalysisExcel
-from AnalysisExcel import *
-import DataAccess
-import LogCtrl
-from ccsf import *
-import time
 import threading
+
+import DataAccess
+from ccfile import *
+from ccsf import *
 
 # Excel存储目录
 pathFolder = ""
@@ -47,36 +43,49 @@ def getFileList(path, wildcard, recursion):
     return fileList
 
 
-def main(folderPath):
-    fileList = glob.glob1(folderPath, "*.xls")
-    # globfiles = glob.glob(folderPath)
-    sql_command_array = []
-    # for item in globfiles:
-    #     print item,os.path.getmtime(item)
-
+def main(folderPath, modifyList=[]):
     has_db = False
-
     if not os.path.exists("steelray.db"):
         has_db = False
     else:
         has_db = True
 
-    ticks = time.time()
-    localtime = time.localtime(ticks)
-    timestr = "-".join([str(localtime.tm_year), str(localtime.tm_mon), str(localtime.tm_mday)])
-    print timestr
+    fileList = []
+    if len(modifyList)<=0 and has_db:
+        return
+    if len(modifyList) <= 0 or (not has_db):
+        fileList = glob.glob1(folderPath, "*.xls")
+    else:
+        for fileinfo in modifyList:
+            fileList.append(os.path.split(fileinfo["name"])[1])
+
+    # for item in fileList:
+    #     print "excel to sqlite:", item, "filename:", str(item).replace(folderPath + "\\", "")
+    # exit()
+
+    # globfiles = glob.glob(folderPath)
+    sql_command_array = []
+    # for item in globfiles:
+    #     print item,os.path.getmtime(item)
+
+
+
+    # ticks = time.time()
+    # localtime = time.localtime(ticks)
+    # timestr = "-".join([str(localtime.tm_year), str(localtime.tm_mon), str(localtime.tm_mday)])
+    # print timestr
     sql_count = 0
 
-    if os.path.exists("commandFiles"):
-        print "已经有了command文件了"
-    else:
-        print "还没有command文件"
-        os.mkdir("commandFiles")
-
-    if not os.path.exists("commandFiles/commandFile(%s).txt" % timestr) and has_db:
-        file_list = open("commandFiles/filelist.txt", "a")
-        file_list.write("commandFile(%s).zip\n" % timestr)
-        file_list.close()
+    # if os.path.exists("commandFiles"):
+    #     print "已经有了command文件了"
+    # else:
+    #     print "还没有command文件"
+    #     os.mkdir("commandFiles")
+    #
+    # if not os.path.exists("commandFiles/commandFile(%s).txt" % timestr) and has_db:
+    #     file_list = open("commandFiles/filelist.txt", "a")
+    #     file_list.write("commandFile(%s).zip\n" % timestr)
+    #     file_list.close()
     threads = []
     t1 = threading.Thread(target=create_macro_file, args=(folderPath,))
     threads.append(t1)
@@ -84,7 +93,7 @@ def main(folderPath):
     # create_macro_file(folderPath)
 
     for item in fileList:
-        # if not item.__contains__("weapon_reform_attr_1"):
+        # if not item.__contains__("achieve"):
         #     continue
         excel_data_dic = readexcel(item)
         t2 = threading.Thread(target=create_csfile, args=(folderPath + os.sep + "Structs", excel_data_dic,))
@@ -93,11 +102,8 @@ def main(folderPath):
         sql_command_array = DataAccess.SaveToSqlite("steelray.db", excel_data_dic, has_db)
         # create_csfile(folderPath + os.sep + "csfiles", excel_data_dic)
         # 防止第一次导入数据库时生成超大SQL文件
-        if has_db:
-            command_file = open("commandFiles/commandFile(%s).txt" % timestr, "a")
-            command_file.write("".join(sql_command_array))
-            command_file.write("\n")
-            command_file.close()
+        if has_db and len(sql_command_array) > 0:
+            create_command_file(has_db, sql_command_array)
         sql_count += len(sql_command_array)
         sql_command_array = []
     print "查询语句总条数:", sql_count
@@ -105,7 +111,7 @@ def main(folderPath):
     for item in threads:
         item.join()
 
-
+'''
 if __name__ == "__main__":
     # 指定excel文件的位置
     # os.path.abspath('.') 会找到当前py文件的文件夹路径
@@ -113,3 +119,5 @@ if __name__ == "__main__":
     pathFolder = os.path.abspath('.') + os.sep + "excelfile"
     # importFiles(pathFolder, ".xls", 0)
     main(pathFolder)
+'''
+

@@ -3,10 +3,12 @@
 @Author : Liuzhenrain
 @Create : 16/8/3
 """
-import xlrd
 import os
 import traceback
-import LogCtrl
+
+import xlrd
+
+from PythonAnalysisExcel import LogCtrl
 
 commentRow = 0
 exportTypeRow = 1  # 输出类型所在行
@@ -36,7 +38,6 @@ def get_cell_data(sheet, row, col):
         return sheet.cell_value(row, col).encode('utf-8')
     else:
         return str(sheet.cell_value(row, col))
-        # return (sheet.cell_value(row, col) + "").encode('utf-8')
 
 
 def parseValue(vType, value):
@@ -148,13 +149,18 @@ def _read_excel_data(workbook, filename, sheetname, ismain, excel_data_dic={}):
                 rowdata.append(value)
         else:
             for colIndex in real_data_col:
-                # exportType = get_cell_data(worksheet, exportTypeRow, colIndex)
-                # if exportType.lower() == "s":
-                #     continue
-                # else:
                 datatype = get_cell_data(worksheet, fieldTypeRow, colIndex)
                 value = get_cell_data(worksheet, rowIndex, colIndex)
                 value = parseValue(datatype, value)
+                if datatype[0] + datatype[-1] == "[]" or (
+                                    datatype != "float" and datatype != "int" and datatype != "string"):
+                    value = value.split(".")[0]
+                if datatype == "string":
+                    if not value.__contains__("[\n]"):
+                        value = value.replace("\n", "")
+                    if not value.__contains__("[\t]"):
+                        value = value.replace("\t", "")
+                    value = value.replace("\r", "")
                 rowdata.append(value)
         data_dic[rowIndex + 1] = rowdata
 
@@ -167,7 +173,7 @@ def _read_excel_data(workbook, filename, sheetname, ismain, excel_data_dic={}):
 def get_workbook(path):
     workbook = None
     if os.path.exists(path):
-        workbook = xlrd.open_workbook(path,formatting_info=True,encoding_override="utf-8")
+        workbook = xlrd.open_workbook(path, formatting_info=True, encoding_override="utf-8")
     return workbook
 
 
@@ -175,7 +181,7 @@ def readexcel(filename):
     LogCtrl.log(".......当前EXCEL : %s ......" % filename)
     pathFolder = os.path.abspath('.') + os.sep + "excelfile"
     # 获取整个工作簿
-    workbook = get_workbook(pathFolder+os.sep+filename)
+    workbook = get_workbook(pathFolder + os.sep + filename)
     # workbook = xlrd.open_workbook(pathFolder + os.sep + filename, formatting_info=True, encoding_override="utf-8")
     excel_data_dic = {}
     main_sheet_name = str(filename).replace(".xls", "")
