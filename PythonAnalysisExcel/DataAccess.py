@@ -73,7 +73,7 @@ def SaveToSqlite(databaseName, excel_data_dic={}, return_command=False):
         has_unikey, keycount = check_unikey(export_type)
         if has_unikey:
             sqlcommand += " `unikey` text,"
-            print "%s表有unikey,且拼合列总数为:%s" % (keyName, keycount)
+            print u"%s表有unikey,且拼合列总数为:%s" % (keyName, keycount)
             # 有unikey列，列总数加上一行
             sql_table_ncols += 1
             allcolumns.append("unikey")
@@ -315,7 +315,7 @@ def get_update_command(tablename, excel_data_dic={}, has_unikey=False, keycount=
             #     print type(excel), type(sql)
             #     print "对比：", str(excel), sql
             if cmp(str(excel), sql) != 0:
-                print "出现对比数据,字段:%s,Excel数据：%s Sqlite数据:%s" % (field_name, excel, sql)
+                # print "出现对比数据,字段:%s,Excel数据：%s Sqlite数据:%s" % (field_name, excel, sql)
                 command += "`%s`='%s'," % (field_name, excel)
         if len(command) != 0:
             command = command[0:-1]

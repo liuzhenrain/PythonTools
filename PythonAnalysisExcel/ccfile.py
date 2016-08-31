@@ -22,7 +22,7 @@ def create_command_file(has_db, sqlcommands=[]):
     timestr = "-".join([str(localtime.tm_year), str(localtime.tm_mon), str(localtime.tm_mday)])
 
     if not os.path.exists("commandFiles"):
-        print "已经有了command文件了"
+        print u"已经有了command文件了"
         os.mkdir("commandFiles")
 
     gzfile_path = "commandFiles/commandFile(%s).gz" % ticks

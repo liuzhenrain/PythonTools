@@ -11,6 +11,7 @@ import threading
 import DataAccess
 from ccfile import *
 from ccsf import *
+import LogCtrl
 
 # Excel存储目录
 pathFolder = ""
@@ -106,7 +107,7 @@ def main(folderPath, modifyList=[]):
             create_command_file(has_db, sql_command_array)
         sql_count += len(sql_command_array)
         sql_command_array = []
-    print "查询语句总条数:", sql_count
+    print u"查询语句总条数:", sql_count
     LogCtrl.write_log_file()
     for item in threads:
         item.join()
