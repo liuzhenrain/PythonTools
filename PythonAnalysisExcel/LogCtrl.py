@@ -9,11 +9,11 @@ logMsg = []
 
 def log(msg):
     global logMsg
-    print msg
+    print msg.decode("utf-8")
     logMsg.append(msg)
 
 
 def write_log_file():
-    logfile = open("log.log", "w");
-    logfile.write("\n".join(logMsg));
+    logfile = open("log.log", "w")
+    logfile.write("\n".join(logMsg))
     logfile.close()

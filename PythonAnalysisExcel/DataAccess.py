@@ -6,8 +6,7 @@
 """
 import sqlite3
 import traceback
-
-from PythonAnalysisExcel import LogCtrl
+import LogCtrl
 
 dataName = ""
 connection = None
@@ -35,11 +34,18 @@ def check_field_column(columns, fields):
         return True
     for row in columns:
         name = row[1]
-        if cmp(name, "rowindex") == 0:
+        if cmp(name, 'rowindex') == 0:
             continue
         if not (name in fields):
             return True
     return False
+
+
+def parse_col_type(col_type):
+    if col_type == "int" or col_type == "float" or col_type == "string":
+        return col_type
+    else:
+        return "TEXT"
 
 
 def SaveToSqlite(databaseName, excel_data_dic={}, return_command=False):
@@ -54,7 +60,7 @@ def SaveToSqlite(databaseName, excel_data_dic={}, return_command=False):
     sql_command_array = []
     for keyName in excel_data_dic.keys():
         # keyname 即为表名
-        sqlcommand = "create table `%s` (`rowindex` integer primary key," % keyName
+        create_sql_command = "create table `%s` (`rowindex` integer primary key," % keyName
         # 确定EXCEL导入SQL中占用列的个数
         sql_table_ncols = 1  # 所有的表，默认有一个rowindex列
 
@@ -67,12 +73,14 @@ def SaveToSqlite(databaseName, excel_data_dic={}, return_command=False):
         field_name_array = field_dic["fieldname"]
         allcolumns = []
         allcolumns.extend(field_name_array)
+        field_type = []
+        field_type.extend(field_dic["fieldtype"])
         # 确定表中是否需要unikey
         has_unikey = False
         export_type = field_dic["exporttype"]
         has_unikey, keycount = check_unikey(export_type)
         if has_unikey:
-            sqlcommand += " `unikey` text,"
+            create_sql_command += " `unikey` text,"
             print u"%s表有unikey,且拼合列总数为:%s" % (keyName, keycount)
             # 有unikey列，列总数加上一行
             sql_table_ncols += 1
@@ -83,10 +91,10 @@ def SaveToSqlite(databaseName, excel_data_dic={}, return_command=False):
         field_name_len = len(field_name_array)
         for i in range(field_name_len):
             field_name = str(field_name_array[i])
-            sqlcommand += ("`" + field_name + "` text")
+            create_sql_command += ("`" + field_name + "` text")
             if i < field_name_len - 1:
-                sqlcommand += ","
-        sqlcommand += ");"
+                create_sql_command += ","
+        create_sql_command += ");"
 
         # 首先查询数据库中有没有这个指定的表
         # 下条语句会返回一个sql语句回来，如果能够查询到指定的表名数据
@@ -97,20 +105,45 @@ def SaveToSqlite(databaseName, excel_data_dic={}, return_command=False):
             # print "查询到有%s表" % (keyName)
             # 查询到了指定的表，那就可以开始进行数据比对工作
             # 首先比对列数以及列名是否均一致
-            cursor.execute("PRAGMA table_info('%s');" % (keyName))
+            cursor.execute("PRAGMA table_info('%s');" % keyName)
             sql_all = cursor.fetchall()
             if len(sql_all) <> sql_table_ncols or check_field_column(sql_all, allcolumns):
-                # 查询出来的列数不一致，先删除表，然后创建表
+                # 查询出来的列数不一致,或者列名有改变，先删除表，然后创建表
                 try:
+                    # 1.创建一个临时表：
+                    sql1 = "CREATE TABLE sqlitestudio_temp_table AS SELECT * FROM `%s`;" % keyName
+                    cursor.execute(sql1)
+                    # 2.删除原始表:
+                    sql2 = "DROP TABLE `%s`;" % keyName
+                    cursor.execute(sql2)
+                    # 3.创建一个新的表，表名和原始表一样，字段使用新字段。
+                    sql3 = "CREATE TABLE `%s` (rowindex INTEGER PRIMARY KEY,"
+                    # 3.1 循环读取excel中所有的列名,默认是不包括rowindex的。而且unikey是在数组最后一个
+                    for index in range(len(allcolumns)):
+                        field_name = str(allcolumns[index])
+                        coltype = "TEXT"
+                        if index < len(field_type):
+                            coltype = parse_col_type(field_type[index])
+                        sql3 += ("`" + field_name + "` %s" % coltype)
+                        if index < len(allcolumns) - 1:
+                            sql3 += ","
+                    sql3 += ");"
+                    # 4 使用Insert语句，将整个表的数据从临时表中copy到新表中
+                    sql4 = "INSERT INTO `%s` (rowindex,"
+                    for index in range(len(allcolumns)):
+                        field_name = str(allcolumns[index])
+                        sql3 += ("`" + field_name + "`")
+                        if index < len(allcolumns) - 1:
+                            sql3 += ","
                     # 删除表
                     if log_sql_command:
                         sql_command_array.append("drop table `%s`;" % (keyName))
                     cursor.execute("drop table `%s`;" % (keyName))
                     # 创建表
                     # print "创建表", sqlcommand
-                    cursor.execute(sqlcommand)
+                    cursor.execute(create_sql_command)
                     if log_sql_command:
-                        sql_command_array.append(sqlcommand)
+                        sql_command_array.append(create_sql_command)
                     command_array = get_add_sqlcommand(keyName, excel_dic, has_unikey, keycount)
                     cursor.executescript("".join(command_array))
                     conn.commit()
@@ -161,8 +194,8 @@ def SaveToSqlite(databaseName, excel_data_dic={}, return_command=False):
             try:
                 # print "创建表", sqlcommand
                 if log_sql_command:
-                    sql_command_array.append(sqlcommand)
-                cursor.execute(sqlcommand)
+                    sql_command_array.append(create_sql_command)
+                cursor.execute(create_sql_command)
                 conn.commit()
                 command_array = get_add_sqlcommand(keyName, excel_dic, has_unikey, keycount)
                 cursor.executescript("".join(command_array))
