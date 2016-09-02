@@ -59,39 +59,12 @@ def main(folderPath, modifyList=[]):
     else:
         for fileinfo in modifyList:
             fileList.append(os.path.split(fileinfo["name"])[1])
-
-    # for item in fileList:
-    #     print "excel to sqlite:", item, "filename:", str(item).replace(folderPath + "\\", "")
-    # exit()
-
-    # globfiles = glob.glob(folderPath)
     sql_command_array = []
-    # for item in globfiles:
-    #     print item,os.path.getmtime(item)
-
-
-
-    # ticks = time.time()
-    # localtime = time.localtime(ticks)
-    # timestr = "-".join([str(localtime.tm_year), str(localtime.tm_mon), str(localtime.tm_mday)])
-    # print timestr
     sql_count = 0
-
-    # if os.path.exists("commandFiles"):
-    #     print "已经有了command文件了"
-    # else:
-    #     print "还没有command文件"
-    #     os.mkdir("commandFiles")
-    #
-    # if not os.path.exists("commandFiles/commandFile(%s).txt" % timestr) and has_db:
-    #     file_list = open("commandFiles/filelist.txt", "a")
-    #     file_list.write("commandFile(%s).zip\n" % timestr)
-    #     file_list.close()
     threads = []
     t1 = threading.Thread(target=create_macro_file, args=(folderPath,))
     threads.append(t1)
     t1.start()
-    # create_macro_file(folderPath)
 
     for item in fileList:
         # if not item.__contains__("achieve"):
@@ -101,7 +74,6 @@ def main(folderPath, modifyList=[]):
         threads.append(t2)
         t2.start()
         sql_command_array = DataAccess.SaveToSqlite("steelray.db", excel_data_dic, has_db)
-        # create_csfile(folderPath + os.sep + "csfiles", excel_data_dic)
         # 防止第一次导入数据库时生成超大SQL文件
         if has_db and len(sql_command_array) > 0:
             create_command_file(has_db, sql_command_array)
