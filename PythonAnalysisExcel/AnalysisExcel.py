@@ -160,6 +160,7 @@ def _read_excel_data(workbook, filename, sheetname, ismain, excel_data_dic={}):
                         value = value.replace("\t", "")
                     value = value.replace("\r", "")
                 rowdata.append(value)
+
         data_dic[rowIndex + 1] = rowdata
 
     sheet_data_dic["datadic"] = data_dic
