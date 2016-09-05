@@ -12,6 +12,7 @@ import DataAccess
 from ccfile import *
 from ccsf import *
 import LogCtrl
+import time
 
 # Excel存储目录
 pathFolder = ""
@@ -65,7 +66,7 @@ def main(folderPath, modifyList=[]):
     t1 = threading.Thread(target=create_macro_file, args=(folderPath,))
     threads.append(t1)
     t1.start()
-
+    ticks = int(time.time())
     for item in fileList:
         # if not item.__contains__("achieve"):
         #     continue
@@ -76,7 +77,7 @@ def main(folderPath, modifyList=[]):
         sql_command_array = DataAccess.SaveToSqlite("steelray.db", excel_data_dic, has_db)
         # 防止第一次导入数据库时生成超大SQL文件
         if has_db and len(sql_command_array) > 0:
-            create_command_file(has_db, sql_command_array)
+            create_command_file(has_db, ticks, sql_command_array)
         sql_count += len(sql_command_array)
         sql_command_array = []
     print u"查询语句总条数:", sql_count
@@ -84,7 +85,7 @@ def main(folderPath, modifyList=[]):
     for item in threads:
         item.join()
 
-'''
+
 if __name__ == "__main__":
     # 指定excel文件的位置
     # os.path.abspath('.') 会找到当前py文件的文件夹路径
@@ -92,5 +93,3 @@ if __name__ == "__main__":
     pathFolder = os.path.abspath('.') + os.sep + "excelfile"
     # importFiles(pathFolder, ".xls", 0)
     main(pathFolder)
-'''
-

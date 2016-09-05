@@ -7,19 +7,16 @@ Created on 2016/8/25
 """
 import gzip
 import os
-import time
+
 
 BufSize = 1024 * 8
 
 
-def create_command_file(has_db, sqlcommands=[]):
+def create_command_file(has_db,ticks =0, sqlcommands=[]):
     if not has_db:
         return
     global BufSize
     gz = GZipTool(BufSize)
-    ticks = int(time.time())
-    localtime = time.localtime(ticks)
-    timestr = "-".join([str(localtime.tm_year), str(localtime.tm_mon), str(localtime.tm_mday)])
 
     if not os.path.exists("commandFiles"):
         print u"已经有了command文件了"

@@ -60,7 +60,7 @@ def SaveToSqlite(databaseName, excel_data_dic={}, return_command=False):
     sql_command_array = []
     for keyName in excel_data_dic.keys():
         # keyname 即为表名
-        create_sql_command = "create table `%s` (`rowindex` integer primary key," % keyName
+        create_sql_command = "create table `%s` (`rowindex` INT PRIMARY KEY," % keyName
         # 确定EXCEL导入SQL中占用列的个数
         sql_table_ncols = 1  # 所有的表，默认有一个rowindex列
 
@@ -71,27 +71,33 @@ def SaveToSqlite(databaseName, excel_data_dic={}, return_command=False):
         field_dic = excel_dic["fielddic"]  # field_dic:{fieldname,fieldtype}
         # 这里全TMD是地址，等于是指针，修改了field_name_array就等于修改了field_dic["fieldname"]里面的值，更加修改excel_data_dic里面的原始值。
         field_name_array = field_dic["fieldname"]
-        allcolumns = []
-        allcolumns.extend(field_name_array)
-        field_type = []
-        field_type.extend(field_dic["fieldtype"])
+        excel_allcolumns = []
+        excel_allcolumns.extend(field_name_array)
+        excel_allfieldtype = []
+        excel_allfieldtype.extend(field_dic["fieldtype"])
+        '''
+        去掉检查组合键的功能，在处理Excel文件的时候已经写入进去了。
         # 确定表中是否需要unikey
         has_unikey = False
         export_type = field_dic["exporttype"]
         has_unikey, keycount = check_unikey(export_type)
         if has_unikey:
             create_sql_command += " `unikey` text,"
-            print u"%s表有unikey,且拼合列总数为:%s" % (keyName, keycount)
             # 有unikey列，列总数加上一行
             sql_table_ncols += 1
-            allcolumns.append("unikey")
+            excel_allcolumns.append("unikey")
         sql_table_ncols += len(field_name_array)
         # print sql_table_ncols
+        '''
 
         field_name_len = len(field_name_array)
         for i in range(field_name_len):
-            field_name = str(field_name_array[i])
-            create_sql_command += ("`" + field_name + "` text")
+            sql_field_name = str(field_name_array[i])
+            excel_type = str(excel_allfieldtype[i])
+            sql_field_type = excel_type
+            if excel_type != "int" and excel_type != "float":
+                sql_field_type = "TEXT"
+            create_sql_command += "`%s` %s" % (sql_field_name, sql_field_type.upper())
             if i < field_name_len - 1:
                 create_sql_command += ","
         create_sql_command += ");"
@@ -107,44 +113,19 @@ def SaveToSqlite(databaseName, excel_data_dic={}, return_command=False):
             # 首先比对列数以及列名是否均一致
             cursor.execute("PRAGMA table_info('%s');" % keyName)
             sql_all = cursor.fetchall()
-            if len(sql_all) <> sql_table_ncols or check_field_column(sql_all, allcolumns):
+            if len(sql_all) != excel_allcolumns or check_field_column(sql_all, excel_allcolumns):
                 # 查询出来的列数不一致,或者列名有改变，先删除表，然后创建表
                 try:
-                    # 1.创建一个临时表：
-                    sql1 = "CREATE TABLE sqlitestudio_temp_table AS SELECT * FROM `%s`;" % keyName
-                    cursor.execute(sql1)
-                    # 2.删除原始表:
-                    sql2 = "DROP TABLE `%s`;" % keyName
-                    cursor.execute(sql2)
-                    # 3.创建一个新的表，表名和原始表一样，字段使用新字段。
-                    sql3 = "CREATE TABLE `%s` (rowindex INTEGER PRIMARY KEY,"
-                    # 3.1 循环读取excel中所有的列名,默认是不包括rowindex的。而且unikey是在数组最后一个
-                    for index in range(len(allcolumns)):
-                        field_name = str(allcolumns[index])
-                        coltype = "TEXT"
-                        if index < len(field_type):
-                            coltype = parse_col_type(field_type[index])
-                        sql3 += ("`" + field_name + "` %s" % coltype)
-                        if index < len(allcolumns) - 1:
-                            sql3 += ","
-                    sql3 += ");"
-                    # 4 使用Insert语句，将整个表的数据从临时表中copy到新表中
-                    sql4 = "INSERT INTO `%s` (rowindex,"
-                    for index in range(len(allcolumns)):
-                        field_name = str(allcolumns[index])
-                        sql3 += ("`" + field_name + "`")
-                        if index < len(allcolumns) - 1:
-                            sql3 += ","
                     # 删除表
                     if log_sql_command:
-                        sql_command_array.append("drop table `%s`;" % (keyName))
-                    cursor.execute("drop table `%s`;" % (keyName))
+                        sql_command_array.append("drop table `%s`;" % keyName)
+                    cursor.execute("drop table `%s`;" % keyName)
                     # 创建表
                     # print "创建表", sqlcommand
                     cursor.execute(create_sql_command)
                     if log_sql_command:
                         sql_command_array.append(create_sql_command)
-                    command_array = get_add_sqlcommand(keyName, excel_dic, has_unikey, keycount)
+                    command_array = get_add_sqlcommand(keyName, excel_dic)
                     cursor.executescript("".join(command_array))
                     conn.commit()
                 except:
@@ -209,12 +190,12 @@ def SaveToSqlite(databaseName, excel_data_dic={}, return_command=False):
     return sql_command_array
 
 
-def get_add_sqlcommand(tablename, excel_data_dic={}, has_unikey=False, keycount=0):
+def get_add_sqlcommand(tablename, excel_data_dic={}):
     global sql_command_array
     global log_sql_command
     command_array = []
     # print "开始产生数据库增加语句"
-    sqlcommand = "insert into %s (rowindex," % tablename
+    sqlcommand = "REPLACE INTO %s (rowindex," % tablename
     field_dic = {}
     field_dic = excel_data_dic["fielddic"]  # field_dic:{fieldname,fieldtype}
     field_name_array = field_dic["fieldname"]
@@ -224,10 +205,7 @@ def get_add_sqlcommand(tablename, excel_data_dic={}, has_unikey=False, keycount=
         sqlcommand += ("`" + field_name + "`")
         if i < field_name_len - 1:
             sqlcommand += ","
-    if has_unikey:
-        sqlcommand += ",`unikey`) values("
-    else:
-        sqlcommand += ") values("
+    sqlcommand += ") values("
     origin_command = sqlcommand
     data_dic = excel_data_dic["datadic"]
     for key in data_dic.keys():
@@ -238,11 +216,6 @@ def get_add_sqlcommand(tablename, excel_data_dic={}, has_unikey=False, keycount=
             sqlcommand += ("'" + str(data_array[index]) + "'")
             if index < len(data_array) - 1:
                 sqlcommand += ","
-        if has_unikey:
-            unikey_array = []
-            for i in range(keycount):
-                unikey_array.append(str(data_array[i]))
-            sqlcommand += (",'" + "_".join(unikey_array) + "'")
         sqlcommand += ");"
         command_array.append(sqlcommand)
         if log_sql_command:
@@ -342,7 +315,7 @@ def get_update_command(tablename, excel_data_dic={}, has_unikey=False, keycount=
         for index in range(0, len(excel_row_data)):
             excel = excel_row_data[index]
             # excel = "".join(str(excel).split("  "))
-            field_name = field_name_array[index];
+            field_name = field_name_array[index]
             sql = rowdataDic[field_name]
             # if field_name == "description":
             #     print type(excel), type(sql)

@@ -55,6 +55,19 @@ def parseValue(vType, value):
     return value
 
 
+def check_unikey(export_type=[]):
+    count = len(export_type)
+    has_unikey = False
+    keycount = 1
+    for i in range(1, count):
+        if str(export_type[i]).lower() == "k":
+            has_unikey = True
+            keycount += 1
+        else:
+            break
+    return has_unikey, keycount
+
+
 # 读取excel数据，会返回两个个字典。这个方法只会返回客户端保存到sqlite当中的数据，以及需要写入cs文件的相关信息
 # sheet_data_dic 字典数据组成:
 #           key:[heetname],value:{fieldDic:{fieldname:array,fieldtype:fieldType},dataDic:{rowIndex:array},exporttype:array}
@@ -124,6 +137,14 @@ def _read_excel_data(workbook, filename, sheetname, ismain, excel_data_dic={}):
             fieldType = fieldType[1:-1]
         if fieldType <> "int" and fieldType.lower() <> "string" and fieldType <> "float":
             excel_data_dic = _read_excel_data(workbook, filename, fieldType, False, excel_data_dic)
+    # 判定是否有unikey列，如果有直接将unikey列，列名列类型写入到数组中，在其他地方就不用判定了（列类型一定为string)
+    has_unikey, unikeycount = check_unikey(export_type_array)
+    if has_unikey:
+        print u"%s表有unikey,且拼合列总数为:%s AnalysisExcel.py 143" % (filename, unikeycount)
+        field_name_array.append("unikey")
+        field_type_array.append("string")
+        field_desc_array.append("组合键")
+        export_type_array.append("a")
     fieldDic["fieldname"] = field_name_array
     fieldDic["fieldtype"] = field_type_array
     fieldDic["fielddesc"] = field_desc_array
@@ -160,7 +181,11 @@ def _read_excel_data(workbook, filename, sheetname, ismain, excel_data_dic={}):
                         value = value.replace("\t", "")
                     value = value.replace("\r", "")
                 rowdata.append(value)
-
+            if has_unikey:
+                unikey_value = []
+                for uniindex in range(unikeycount):
+                    unikey_value.append(str(rowdata[uniindex]))
+                rowdata.append("_".join(unikey_value))
         data_dic[rowIndex + 1] = rowdata
 
     sheet_data_dic["datadic"] = data_dic
