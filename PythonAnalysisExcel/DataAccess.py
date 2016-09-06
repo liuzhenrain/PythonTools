@@ -8,6 +8,8 @@ import sqlite3
 import traceback
 import LogCtrl
 
+import time
+
 dataName = ""
 connection = None
 log_sql_command = False
@@ -123,11 +125,12 @@ def SaveToSqlite(databaseName, excel_data_dic={}, return_command=False):
                     # 创建表
                     # print "创建表", sqlcommand
                     cursor.execute(create_sql_command)
+                    conn.commit()
                     if log_sql_command:
                         sql_command_array.append(create_sql_command)
-                    command_array = get_add_sqlcommand(keyName, excel_dic)
-                    cursor.executescript("".join(command_array))
-                    conn.commit()
+                    excute_add_sqlcommand(keyName, excel_dic)
+                    # cursor.executescript("".join(command_array))
+                    # conn.commit()
                 except:
                     print traceback.format_exc()
                     LogCtrl.log(traceback.format_exc())
@@ -139,28 +142,28 @@ def SaveToSqlite(databaseName, excel_data_dic={}, return_command=False):
                 count = values[0]
                 if count == 0:
                     # 表中无数据，产生insert语句
-                    command_array = get_add_sqlcommand(keyName, excel_dic, has_unikey, keycount)
-                    try:
-                        cursor.executescript("".join(command_array))
-                        conn.commit()
-                    except:
-                        print traceback.format_exc()
-                        LogCtrl.log(traceback.format_exc())
-                        conn.rollback()
+                    excute_add_sqlcommand(keyName, excel_dic)
+                    # try:
+                    #     cursor.executescript("".join(command_array))
+                    #     conn.commit()
+                    # except:
+                    #     print traceback.format_exc()
+                    #     LogCtrl.log(traceback.format_exc())
+                    #     conn.rollback()
                 else:
                     # print "数据表中有数据", count
                     # 数据表中有数据，对每行数据进行比对，通过rowindex,如果EXCEL中有但是数据库中没有，会自动生成insert语句
-                    command_array = get_update_command(keyName, excel_dic, has_unikey, keycount)
-                    if len(command_array) > 0:
-                        try:
-                            cursor.executescript("".join(command_array))
-                            conn.commit()
-                        except:
-                            print traceback.format_exc()
-                            LogCtrl.log(traceback.format_exc())
-                            conn.rollback()
+                    get_update_command(keyName, excel_dic)
+                    # if len(command_array) > 0:
+                    #     try:
+                    #         cursor.executescript("".join(command_array))
+                    #         conn.commit()
+                    #     except:
+                    #         print traceback.format_exc()
+                    #         LogCtrl.log(traceback.format_exc())
+                    #         conn.rollback()
                     # 删除在EXCEL中没有但是数据库中有的指定行号的数据
-                    command_array = get_delete_command(keyName, excel_dic, has_unikey, keycount)
+                    command_array = get_delete_command(keyName, excel_dic)
                     if len(command_array) > 0:
                         try:
                             cursor.executescript("".join(command_array))
@@ -178,9 +181,12 @@ def SaveToSqlite(databaseName, excel_data_dic={}, return_command=False):
                     sql_command_array.append(create_sql_command)
                 cursor.execute(create_sql_command)
                 conn.commit()
-                command_array = get_add_sqlcommand(keyName, excel_dic, has_unikey, keycount)
-                cursor.executescript("".join(command_array))
-                conn.commit()
+                start = time.time()
+                command_array = excute_add_sqlcommand(keyName, excel_dic)
+                # cursor.executescript("".join(command_array))
+                # conn.commit()
+                end = time.time()
+                print "写入表 %s 数据耗时：%s" % (keyName, (end - start))
             except:
                 print traceback.format_exc()
                 LogCtrl.log(traceback.format_exc())
@@ -190,9 +196,11 @@ def SaveToSqlite(databaseName, excel_data_dic={}, return_command=False):
     return sql_command_array
 
 
-def get_add_sqlcommand(tablename, excel_data_dic={}):
+def excute_add_sqlcommand(tablename, excel_data_dic={}):
     global sql_command_array
     global log_sql_command
+    conn = _get_connection()
+    cursor = conn.cursor()
     command_array = []
     # print "开始产生数据库增加语句"
     sqlcommand = "REPLACE INTO %s (rowindex," % tablename
@@ -205,9 +213,33 @@ def get_add_sqlcommand(tablename, excel_data_dic={}):
         sqlcommand += ("`" + field_name + "`")
         if i < field_name_len - 1:
             sqlcommand += ","
-    sqlcommand += ") values("
+    # sqlcommand += ") values("
+    sqlcommand += ") values "
     origin_command = sqlcommand
     data_dic = excel_data_dic["datadic"]
+    values_array = []
+    for key in data_dic.keys():
+        values = "(%s," % key
+        data_array = data_dic[key]
+        for index in range(len(data_array)):
+            values += ("'" + str(data_array[index]) + "'")
+            if index < len(data_array) - 1:
+                values += ","
+        values += ")"
+        values_array.append(values)
+    sqlcommand = "%s %s;" % (sqlcommand, ",".join(values_array))
+    command_array.append(sqlcommand)
+    try:
+        cursor.execute(sqlcommand)
+        conn.commit()
+        if log_sql_command:
+            sql_command_array.append(sqlcommand)
+        sqlcommand = ""
+    except:
+        conn.rollback()
+    return command_array
+    '''
+
     for key in data_dic.keys():
         # 默认key就是rowindex值
         data_array = data_dic[key]
@@ -217,12 +249,18 @@ def get_add_sqlcommand(tablename, excel_data_dic={}):
             if index < len(data_array) - 1:
                 sqlcommand += ","
         sqlcommand += ");"
+        try:
+            cursor.execute(sqlcommand)
+            conn.commit()
+        except:
+            conn.rollback()
         command_array.append(sqlcommand)
         if log_sql_command:
             sql_command_array.append(sqlcommand)
         # 将语句恢复到进入循环之前的状态
         sqlcommand = origin_command
     return command_array
+    '''
 
 
 def get_single_add_command(tablename, field_name_array, rowindex, data_array, has_unikey, keycount):
@@ -259,6 +297,29 @@ def get_single_add_command(tablename, field_name_array, rowindex, data_array, ha
     return sqlcommand
 
 
+def excute_update_command(tablename, excel_data_dic={}):
+    global sql_command_array
+    global log_sql_command
+    data_dic = excel_data_dic["datadic"]
+    excel_allcolumans = []
+    excel_allcolumans.extend((excel_data_dic["fielddic"])["fieldname"])
+    conn = _get_connection()
+    cursor = conn.cursor()
+    cursor.execute("select `rowindex` from %s" % tablename)
+    # sql_rowindex_list 返回的数据是一个list类型的里面的数据全部是tuple类型的数据
+    sql_rowindex_list = cursor.fetchall()
+    count = len(data_dic.keys())
+    exist_keys = []
+    # 找出所有在excel中有但是sqlite数据库中没有的行号，并将其存储起来
+    for i in range(count):
+        key = data_dic.keys()[i]
+        tupleitem = (key,)
+        if not (tupleitem in sql_rowindex_list):
+            exist_keys.append(key)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+
 def get_update_command(tablename, excel_data_dic={}, has_unikey=False, keycount=0):
     global sql_command_array
     global log_sql_command
@@ -266,19 +327,19 @@ def get_update_command(tablename, excel_data_dic={}, has_unikey=False, keycount=
     data_dic = excel_data_dic["datadic"]
     field_name_array = (excel_data_dic["fielddic"])["fieldname"]
     cursor = _get_connection().cursor()
-    cursor.execute("select `rowindex` from %s" % tablename)
-    # sql_rowindex_list 返回的数据是一个list类型的里面的数据全部是tuple类型的数据
-    sql_rowindex_list = cursor.fetchall()
-    count = len(data_dic.keys())
-    exist_keys = []
-    for i in range(count):
-        key = data_dic.keys()[i]
-        tupleitem = (key,)
-        if not (tupleitem in sql_rowindex_list):
-            exist_keys.append(key)
-            dic = data_dic[key]
-            command_array.append(
-                get_single_add_command(tablename, field_name_array, key, dic, has_unikey, keycount))
+    # cursor.execute("select `rowindex` from %s" % tablename)
+    # # sql_rowindex_list 返回的数据是一个list类型的里面的数据全部是tuple类型的数据
+    # sql_rowindex_list = cursor.fetchall()
+    # count = len(data_dic.keys())
+    # exist_keys = []
+    # for i in range(count):
+    #     key = data_dic.keys()[i]
+    #     tupleitem = (key,)
+    #     if not (tupleitem in sql_rowindex_list):
+    #         exist_keys.append(key)
+    #         dic = data_dic[key]
+    #         command_array.append(
+    #             get_single_add_command(tablename, field_name_array, key, dic, has_unikey, keycount))
 
     # 获取指定表的所有列名字出来
     cursor.execute("PRAGMA table_info('%s');" % (tablename))

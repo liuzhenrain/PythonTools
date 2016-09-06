@@ -68,8 +68,8 @@ def main(folderPath, modifyList=[]):
     t1.start()
     ticks = int(time.time())
     for item in fileList:
-        # if not item.__contains__("achieve"):
-        #     continue
+        if not item.__contains__("weapon_reform_attr_1"):
+            continue
         excel_data_dic = readexcel(item)
         t2 = threading.Thread(target=create_csfile, args=(folderPath + os.sep + "Structs", excel_data_dic,))
         threads.append(t2)
