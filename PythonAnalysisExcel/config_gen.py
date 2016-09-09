@@ -23,6 +23,7 @@ listSep = '^'
 erlPath = ''
 csPath = ''
 xmlPath = ''
+log_sqlcommand = False
 
 
 def parseValue(vType, value):
@@ -96,7 +97,7 @@ def getStruct(xlsData, sheetName, isMain=True, sFieldDict={}, cFieldDict={}, sDe
         elif value == 'a':
             sFieldDict[sheetName].append(col)
             # cFieldDict[sheetName].append(col)
-        # elif value == 'c':
+            # elif value == 'c':
             # cFieldDict[sheetName].append(col)
         elif value == 's':
             sFieldDict[sheetName].append(col)
@@ -126,48 +127,48 @@ def getStruct(xlsData, sheetName, isMain=True, sFieldDict={}, cFieldDict={}, sDe
     recTxt += "}).\n"
     sDefDict[sDefName] += recTxt
 
-#     csTxt = '\
-#     [Serializable]\n\
-#     public class %s\n\
-#     {\n\
-# %s\
-# %s\
-#     }\n\
-# '
-#     cDefName = 'Sys%s' % sheetName
-#     if isMain:
-#         line = '%s		public %s %s;\n' % ('', 'string', 'unikey')
-#     else:
-#         line = ''
-#     cItemLen = len(cFieldDict[sheetName])
-#     constructorLines = ''  # # 构造函数
-#     for i in range(cItemLen):
-#         prop = cFieldDict[sheetName][i]
-#         fieldName = GetCellData(sheet, fieldNameRow, prop)
-#         fieldType = GetCellData(sheet, fieldTypeRow, prop)
-#
-#         isList = fieldType[0] + fieldType[-1] == '[]'
-#         if isList:
-#             fieldType = fieldType[1:-1]
-#
-#         if fieldType <> 'int' and fieldType <> 'string' and fieldType <> 'float':
-#             # # 递归生成复杂结构的数据
-#             sFieldDict, cFieldDict, sDefDict, cDefDict = getStruct(xlsData, fieldType, False, sFieldDict, cFieldDict,
-#                                                                    sDefDict, cDefDict)
-#             fieldType = 'Sys%s' % fieldType
-#         if isList:
-#             line = '%s		public List<%s> %s; //%s\n' % (
-#                 line, fieldType, fieldName, GetCellData(sheet, commentRow, prop))
-#         else:
-#             line = '%s		public %s %s; //%s\n' % (line, fieldType, fieldName, GetCellData(sheet, commentRow, prop))
-#
-#         constructorLines = '%s			this.%s = instance.%s;\n' % (constructorLines, fieldName, fieldName)
-#
-#     constructorLines = '		public %s(){}\n		public %s(%s instance)\n		{\n%s		}\n' % (
-#         cDefName, cDefName, cDefName, constructorLines)
-#     constructorLines = ''
-#     csTxt = csTxt % (cDefName, line, constructorLines)
-#     cDefDict[cDefName] = csTxt
+    #     csTxt = '\
+    #     [Serializable]\n\
+    #     public class %s\n\
+    #     {\n\
+    # %s\
+    # %s\
+    #     }\n\
+    # '
+    #     cDefName = 'Sys%s' % sheetName
+    #     if isMain:
+    #         line = '%s		public %s %s;\n' % ('', 'string', 'unikey')
+    #     else:
+    #         line = ''
+    #     cItemLen = len(cFieldDict[sheetName])
+    #     constructorLines = ''  # # 构造函数
+    #     for i in range(cItemLen):
+    #         prop = cFieldDict[sheetName][i]
+    #         fieldName = GetCellData(sheet, fieldNameRow, prop)
+    #         fieldType = GetCellData(sheet, fieldTypeRow, prop)
+    #
+    #         isList = fieldType[0] + fieldType[-1] == '[]'
+    #         if isList:
+    #             fieldType = fieldType[1:-1]
+    #
+    #         if fieldType <> 'int' and fieldType <> 'string' and fieldType <> 'float':
+    #             # # 递归生成复杂结构的数据
+    #             sFieldDict, cFieldDict, sDefDict, cDefDict = getStruct(xlsData, fieldType, False, sFieldDict, cFieldDict,
+    #                                                                    sDefDict, cDefDict)
+    #             fieldType = 'Sys%s' % fieldType
+    #         if isList:
+    #             line = '%s		public List<%s> %s; //%s\n' % (
+    #                 line, fieldType, fieldName, GetCellData(sheet, commentRow, prop))
+    #         else:
+    #             line = '%s		public %s %s; //%s\n' % (line, fieldType, fieldName, GetCellData(sheet, commentRow, prop))
+    #
+    #         constructorLines = '%s			this.%s = instance.%s;\n' % (constructorLines, fieldName, fieldName)
+    #
+    #     constructorLines = '		public %s(){}\n		public %s(%s instance)\n		{\n%s		}\n' % (
+    #         cDefName, cDefName, cDefName, constructorLines)
+    #     constructorLines = ''
+    #     csTxt = csTxt % (cDefName, line, constructorLines)
+    #     cDefDict[cDefName] = csTxt
     return sFieldDict, cFieldDict, sDefDict, cDefDict
 
 
@@ -216,6 +217,7 @@ def exportDef(path, sDefDict, cDefDict):
     sysSFileW.write(allSTxt)
     sysSFileW.close()
     print u'服务端配置文件ok'
+
 
 #     csTxt = '/**\n\
 # *%s  自动生成,请勿编辑\n\
@@ -285,19 +287,19 @@ def exportDef(path, sDefDict, cDefDict):
 #             cSysList[macroKey] = sysCInfo
 #     print u'客户端常量配置ok'
 
-    # cSysList2 = []
-    # for cSysKey in cSysList:
-    #     cSysList2.append(cSysList[cSysKey])
-    # cSysList2 = sorted(cSysList2, lambda (x), (y): cmp(x['sys_c_key'], y['sys_c_key']), reverse=False)
-    # allTxt = ""
-    # for cSys in cSysList2:
-    #     allTxt += cSys['content']
-    #
-    # csFile = open(cSysFile, 'w')
-    # txt = csTxt % ('Packet', allTxt[1:])
-    # csFile.write(txt)
-    # csFile.close()
-    # print u'客户端配置文件ok'
+# cSysList2 = []
+# for cSysKey in cSysList:
+#     cSysList2.append(cSysList[cSysKey])
+# cSysList2 = sorted(cSysList2, lambda (x), (y): cmp(x['sys_c_key'], y['sys_c_key']), reverse=False)
+# allTxt = ""
+# for cSys in cSysList2:
+#     allTxt += cSys['content']
+#
+# csFile = open(cSysFile, 'w')
+# txt = csTxt % ('Packet', allTxt[1:])
+# csFile.write(txt)
+# csFile.close()
+# print u'客户端配置文件ok'
 
 
 def initIndexRow(xlsData, sheetName, isMain=True, indexRowDict={}):
@@ -563,8 +565,8 @@ def parseData(path, xlsData, sheetName, isMain=True, sFieldDict={}, cFieldDict={
             # sub_node = doc.createElement(cDefName)
 
             # if isMain:
-                # # 主节点添加unikey
-                # sub_node.appendChild(newElement(doc, 'unikey', cKey))
+            # # 主节点添加unikey
+            # sub_node.appendChild(newElement(doc, 'unikey', cKey))
 
             # for col in cFieldDict[sheetName]:
             #     exportType = GetCellData(sheet, exportTypeRow, col)
@@ -595,7 +597,7 @@ def parseData(path, xlsData, sheetName, isMain=True, sFieldDict={}, cFieldDict={
         # doc.writexml(xml_f, addindent='  ', newl='\n', encoding='utf-8')
 
 
-def main(path):
+def main(path, logsql):
     timeFile = os.path.abspath('.') + os.sep + '\last_time.txt'
     dirPath = path + r'\\*.xls'
     strTimeInfos = ""
@@ -633,7 +635,7 @@ def main(path):
             timeInfos[fileName] = timeInfo
     modifyList = sorted(modifyList, lambda (x), (y): cmp(x['time'], y['time']), reverse=True)
     # 生成客户端文件以及数据库文件。
-    ExcelToSqlite.main(path, modifyList)
+    ExcelToSqlite.savetosqlite(path, modifyList, logsql)
     global erlPath, csPath, xmlPath
     erlPath = "%s%s%s" % (path, os.sep, "server")
     # csPath = "%s%s%s%s%s" % (path, os.sep, 'client', os.sep, 'cs')
@@ -693,6 +695,7 @@ def main(path):
     timeFile.write(baseTimeStr)
     timeFile.close()
     print u'\n持久操作时间ok'
+    print u"\n 一定要打开当前文件夹下的log.log文件是否有错误信息，如果有请修改excel文件之后重新执行bat文件"
 
 
 def genMacroContent(xlsFile, sheetName, valueIndex, erlIndex, csIndex, commentIndex, lang):
@@ -776,6 +779,7 @@ def genMacro(path):
 if __name__ == "__main__":
     if len(sys.argv) > 1:
         path = sys.argv[1]
+        logsql = sys.argv[2]
     else:
         path = '%s%s%s' % (os.path.abspath('.'), os.sep, 'excelfile')
-    main(path)
+    main(path, logsql)

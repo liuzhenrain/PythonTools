@@ -53,9 +53,9 @@ namespace Philip.Sqlite.DataStruct\n\
     \t///\n\t\
     internal new string defaultcolumn="%s";\n\
 ''' % (class_name, class_name, class_name, sheet_name, field_name_array[0])
-    if has_unikey:
-        unikey_text = "\t    ///\n\t    /// 组合键\n\t    ///\n\t    public string unikey;"
-        field_text.append(unikey_text)
+    # if has_unikey:
+    #     unikey_text = "\t    ///\n\t    /// 组合键\n\t    ///\n\t    public string unikey;"
+    #     field_text.append(unikey_text)
     for index in range(count):
         field_type = field_type_array[index]
         isList = field_type[0] + field_type[-1] == "[]"

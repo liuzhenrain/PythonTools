@@ -86,11 +86,9 @@ def _read_excel_data(workbook, filename, sheetname, ismain, excel_data_dic={}):
     except:
 
         if ismain == True:
-            # print u"文件名%s和主表名%s字不一致，请修改EXCEL文件" % (filename, sheetname)
             LogCtrl.log("文件名%s和主表名%s字不一致，请修改EXCEL文件" % (filename, sheetname))
             return excel_data_dic
         else:
-            # print u"Excel文件:%s中没有%s这个表" % (filename, sheetname)
             LogCtrl.log("Excel文件:%s中没有%s这个表" % (filename, sheetname))
             return excel_data_dic
         print traceback.format_exc()
@@ -160,8 +158,8 @@ def _read_excel_data(workbook, filename, sheetname, ismain, excel_data_dic={}):
 
         # 如果表中的第一个数据key为空值，直接跳过。
         if dataKey == "":
-            # print u"%s表第%s行Key数据为空，直接跳过." % (sheetname, rowIndex + 1)
-            LogCtrl.log("%s表第%s行Key数据为空，直接跳过." % (sheetname, rowIndex + 1))
+            print u"%s表第%s行Key数据为空，直接跳过." % (sheetname, rowIndex + 1)
+            # LogCtrl.log("%s表第%s行Key数据为空，直接跳过." % (sheetname, rowIndex + 1))
             # for colIndex in real_data_col:
             #     value = "%s表第%s行Key数据为空,其余值全部填写同样的数据" % (sheetname, rowIndex + 1)
             #     rowdata.append(value)
@@ -202,8 +200,8 @@ def get_workbook(path):
 
 
 def readexcel(filename):
-    # print u".......当前EXCEL : %s ......" % filename
-    LogCtrl.log(".......当前EXCEL : %s ......" % filename)
+    print u".......当前EXCEL : %s ......" % filename
+    # LogCtrl.log(".......当前EXCEL : %s ......" % filename)
     pathFolder = os.path.abspath('.') + os.sep + "excelfile"
     # 获取整个工作簿
     workbook = get_workbook(pathFolder + os.sep + filename)

@@ -45,15 +45,19 @@ def getFileList(path, wildcard, recursion):
     return fileList
 
 
-def main(folderPath, modifyList=[]):
+def savetosqlite(folderPath, modifyList=[], logsql=False):
     has_db = False
     if not os.path.exists("steelray.db"):
         has_db = False
     else:
         has_db = True
+    if has_db == False:
+        logsql = has_db
+
+    print logsql, has_db
 
     fileList = []
-    if len(modifyList)<=0 and has_db:
+    if len(modifyList) <= 0 and has_db:
         return
     if len(modifyList) <= 0 or (not has_db):
         fileList = glob.glob1(folderPath, "*.xls")
@@ -68,15 +72,15 @@ def main(folderPath, modifyList=[]):
     t1.start()
     ticks = int(time.time())
     for item in fileList:
-        if not item.__contains__("weapon_reform_attr_1"):
-            continue
+        # if not item.__contains__("action_speed_test"):
+        #     continue
         excel_data_dic = readexcel(item)
         t2 = threading.Thread(target=create_csfile, args=(folderPath + os.sep + "Structs", excel_data_dic,))
         threads.append(t2)
         t2.start()
-        sql_command_array = DataAccess.SaveToSqlite("steelray.db", excel_data_dic, has_db)
+        sql_command_array = DataAccess.SaveToSqlite("steelray.db", excel_data_dic, logsql)
         # 防止第一次导入数据库时生成超大SQL文件
-        if has_db and len(sql_command_array) > 0:
+        if logsql and len(sql_command_array) > 0:
             create_command_file(has_db, ticks, sql_command_array)
         sql_count += len(sql_command_array)
         sql_command_array = []
@@ -86,10 +90,25 @@ def main(folderPath, modifyList=[]):
         item.join()
 
 
-if __name__ == "__main__":
-    # 指定excel文件的位置
-    # os.path.abspath('.') 会找到当前py文件的文件夹路径
-    # os.sep 确定当前系统的路径分隔符，可以使用 print os.sep 打印看一下
-    pathFolder = os.path.abspath('.') + os.sep + "excelfile"
-    # importFiles(pathFolder, ".xls", 0)
-    main(pathFolder)
+def only_create_csfile(folderPath):
+    fileList = glob.glob1(folderPath, "*.xls")
+    threads = []
+    t1 = threading.Thread(target=create_macro_file, args=(folderPath,))
+    threads.append(t1)
+    t1.start()
+    for item in fileList:
+        excel_data_dic = readexcel(item)
+        t2 = threading.Thread(target=create_csfile, args=(folderPath + os.sep + "Structs", excel_data_dic,))
+        threads.append(t2)
+        t2.start()
+    LogCtrl.write_log_file()
+    for item in threads:
+        item.join()
+
+# if __name__ == "__main__":
+#     # 指定excel文件的位置
+#     # os.path.abspath('.') 会找到当前py文件的文件夹路径
+#     # os.sep 确定当前系统的路径分隔符，可以使用 print os.sep 打印看一下
+#     pathFolder = os.path.abspath('.') + os.sep + "excelfile"
+#     savetosqlite(pathFolder)
+#     # only_create_csfile(pathFolder)
