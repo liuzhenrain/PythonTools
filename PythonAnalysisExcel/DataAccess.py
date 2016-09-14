@@ -7,6 +7,7 @@
 import sqlite3
 import traceback
 import LogCtrl
+import copy
 
 import time
 
@@ -60,7 +61,7 @@ def SaveToSqlite(databaseName, excel_data_dic={}, return_command=False):
     global log_sql_command
     log_sql_command = return_command
     sql_command_array = []
-    for tablename in excel_data_dic.keys():
+    for tablename,data in excel_data_dic.iteritems():
         # keyname 即为表名
         create_sql_command = "create table `%s` (`rowindex` INT PRIMARY KEY," % tablename
         # 确定EXCEL导入SQL中占用列的个数
@@ -68,7 +69,8 @@ def SaveToSqlite(databaseName, excel_data_dic={}, return_command=False):
 
         # 以下数据结构请参照 AnalysisExcel中的_read_excel_data 方法注释
         excel_dic = {}
-        excel_dic = excel_data_dic[tablename]
+        # 深层COPY重新开辟一个内存空间，保存所有的数据，然后新的变量指向新开辟的地址，防止改变原有的数据。
+        excel_dic = copy.deepcopy(data)
         field_dic = {}
         field_dic = excel_dic["fielddic"]  # field_dic:{fieldname,fieldtype}
         # 这里全TMD是地址，等于是指针，修改了field_name_array就等于修改了field_dic["fieldname"]里面的值，更加修改excel_data_dic里面的原始值。
