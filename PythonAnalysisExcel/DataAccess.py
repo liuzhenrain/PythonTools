@@ -439,9 +439,14 @@ def get_delete_command(tablename, excel_data_dic={}):
     return command_array
 
 
-def _get_connection():
+def _get_connection(basename=""):
+    name=""
+    if basename=="":
+        name = dataName
+    else:
+        name = basename
     global connection
-    connection = sqlite3.connect(dataName)
+    connection = sqlite3.connect(name)
     return connection
 
 
