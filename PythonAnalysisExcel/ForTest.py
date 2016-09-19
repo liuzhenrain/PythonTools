@@ -8,6 +8,8 @@ Created on 2016/9/8
 import os
 from ExcelToSqlite import savetosqlite
 
+import DataAccess
+
 if __name__ == "__main__":
     pathFolder = os.path.abspath('.') + os.sep + "excelfile"
     savetosqlite(pathFolder, [{"name": "achieve.xls"}], False)

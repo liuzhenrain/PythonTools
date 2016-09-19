@@ -218,7 +218,6 @@ def exportDef(path, sDefDict, cDefDict):
     sysSFileW.close()
     print u'服务端配置文件ok'
 
-
     csTxt = '/**\n\
 *%s  自动生成,请勿编辑\n\
 */\n\
@@ -269,9 +268,9 @@ namespace Assets.Scripts.Com.Game.Config\n\
                 "content": cDefDict[cDefKey]
             }
             cSysList[cDefKey] = sysCInfo
-        # csFile.write(txt)
-        # csFile.close()
-#
+            # csFile.write(txt)
+            # csFile.close()
+        #
     print u'客户端常量配置'
     (_erlMacro, csMacro) = genMacro(path)
     for macroKey in csMacro.keys():
@@ -286,6 +285,7 @@ namespace Assets.Scripts.Com.Game.Config\n\
             }
             cSysList[macroKey] = sysCInfo
     print u'客户端常量配置ok'
+
 
 # cSysList2 = []
 # for cSysKey in cSysList:
@@ -779,7 +779,10 @@ def genMacro(path):
 if __name__ == "__main__":
     if len(sys.argv) > 1:
         path = sys.argv[1]
-        logsql = sys.argv[2]
+        if len(sys.argv) >= 3:
+            logsql = True if sys.argv[2]=="True" else False
+        else:
+            logsql = False
     else:
         path = '%s%s%s' % (os.path.abspath('.'), os.sep, 'excelfile')
     main(path, logsql)
