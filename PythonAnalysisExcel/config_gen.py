@@ -218,74 +218,74 @@ def exportDef(path, sDefDict, cDefDict):
     sysSFileW.close()
     print u'服务端配置文件ok'
 
+    csTxt = '/**\n\
+*%s  自动生成,请勿编辑\n\
+*/\n\
+\n\
+using System;\n\
+using System.Collections.Generic;\n\
+namespace Assets.Scripts.Com.Game.Config\n\
+{\n\
+%s\
+}\n\
+'
+    print u'生成Packet.cs',
+    cSysList = {}
+    cContent = ""
+    cSysFile = os.path.abspath('.') + os.sep + '\Packet.cs'
+    if os.path.exists(cSysFile):
+        cContent = open(cSysFile, 'r').read()
+        cContent = cContent[133:-2]
 
-#     csTxt = '/**\n\
-# *%s  自动生成,请勿编辑\n\
-# */\n\
-# \n\
-# using System;\n\
-# using System.Collections.Generic;\n\
-# namespace Assets.Scripts.Com.Game.Config\n\
-# {\n\
-# %s\
-# }\n\
-# '
-#     print u'生成Packet.cs',
-#     cSysList = {}
-#     cContent = ""
-#     cSysFile = os.path.abspath('.') + os.sep + '\Packet.cs'
-#     if os.path.exists(cSysFile):
-#         cContent = open(cSysFile, 'r').read()
-#         cContent = cContent[133:-2]
-#
-#     splitFlag = '}\n'
-#     splitcContents = cContent.split(splitFlag) if len(cContent) > 0 else []
-#
-#     for splitcContent in splitcContents:
-#         if len(splitcContent) > 0:
-#             splitcContent2 = splitcContent.split("public class ")
-#             if len(splitcContent2) > 1:
-#                 splitcContent3 = splitcContent2[1]
-#                 splitcContent4 = splitcContent3.split("{\n")[0]
-#                 sysCKey = splitcContent4.split("\n")[0]
-#                 splitcContent = splitcContent + "}\n"
-#                 packetInfo = {
-#                     "sys_c_key": sysCKey,
-#                     "content": splitcContent
-#                 }
-#                 cSysList[sysCKey] = packetInfo
-#
-#     print u'生成cs文件',
-#     for cDefKey in cDefDict.keys():
-#         csFile = open('%s%s%s.cs' % (csPath, os.sep, cDefKey), 'w')
-#         txt = csTxt % (cDefKey, cDefDict[cDefKey])
-#         if cSysList.has_key(cDefKey):
-#             sysCInfo = cSysList[cDefKey]
-#             sysCInfo['content'] = cDefDict[cDefKey]
-#             cSysList[cDefKey] = sysCInfo
-#         else:
-#             sysCInfo = {
-#                 "sys_c_key": cDefKey,
-#                 "content": cDefDict[cDefKey]
-#             }
-#             cSysList[cDefKey] = sysCInfo
-#         csFile.write(txt)
-#         csFile.close()
-#
-#     print u'客户端常量配置'
-#     (_erlMacro, csMacro) = genMacro(path)
-#     for macroKey in csMacro.keys():
-#         if cSysList.has_key(macroKey):
-#             sysCInfo = cSysList[macroKey]
-#             sysCInfo['content'] = csMacro[macroKey]
-#             cSysList[macroKey] = sysCInfo
-#         else:
-#             sysCInfo = {
-#                 "sys_c_key": macroKey,
-#                 "content": csMacro[macroKey]
-#             }
-#             cSysList[macroKey] = sysCInfo
-#     print u'客户端常量配置ok'
+    splitFlag = '}\n'
+    splitcContents = cContent.split(splitFlag) if len(cContent) > 0 else []
+
+    for splitcContent in splitcContents:
+        if len(splitcContent) > 0:
+            splitcContent2 = splitcContent.split("public class ")
+            if len(splitcContent2) > 1:
+                splitcContent3 = splitcContent2[1]
+                splitcContent4 = splitcContent3.split("{\n")[0]
+                sysCKey = splitcContent4.split("\n")[0]
+                splitcContent = splitcContent + "}\n"
+                packetInfo = {
+                    "sys_c_key": sysCKey,
+                    "content": splitcContent
+                }
+                cSysList[sysCKey] = packetInfo
+
+    print u'生成cs文件',
+    for cDefKey in cDefDict.keys():
+        # csFile = open('%s%s%s.cs' % (csPath, os.sep, cDefKey), 'w')
+        # txt = csTxt % (cDefKey, cDefDict[cDefKey])
+        if cSysList.has_key(cDefKey):
+            sysCInfo = cSysList[cDefKey]
+            sysCInfo['content'] = cDefDict[cDefKey]
+            cSysList[cDefKey] = sysCInfo
+        else:
+            sysCInfo = {
+                "sys_c_key": cDefKey,
+                "content": cDefDict[cDefKey]
+            }
+            cSysList[cDefKey] = sysCInfo
+            # csFile.write(txt)
+            # csFile.close()
+        #
+    print u'客户端常量配置'
+    (_erlMacro, csMacro) = genMacro(path)
+    for macroKey in csMacro.keys():
+        if cSysList.has_key(macroKey):
+            sysCInfo = cSysList[macroKey]
+            sysCInfo['content'] = csMacro[macroKey]
+            cSysList[macroKey] = sysCInfo
+        else:
+            sysCInfo = {
+                "sys_c_key": macroKey,
+                "content": csMacro[macroKey]
+            }
+            cSysList[macroKey] = sysCInfo
+    print u'客户端常量配置ok'
+
 
 # cSysList2 = []
 # for cSysKey in cSysList:
@@ -779,7 +779,10 @@ def genMacro(path):
 if __name__ == "__main__":
     if len(sys.argv) > 1:
         path = sys.argv[1]
-        logsql = sys.argv[2]
+        if len(sys.argv) >= 3:
+            logsql = True if sys.argv[2]=="True" else False
+        else:
+            logsql = False
     else:
         path = '%s%s%s' % (os.path.abspath('.'), os.sep, 'excelfile')
     main(path, logsql)

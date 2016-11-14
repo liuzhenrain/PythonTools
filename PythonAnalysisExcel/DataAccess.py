@@ -7,6 +7,7 @@
 import sqlite3
 import traceback
 import LogCtrl
+import copy
 
 import time
 
@@ -60,15 +61,15 @@ def SaveToSqlite(databaseName, excel_data_dic={}, return_command=False):
     global log_sql_command
     log_sql_command = return_command
     sql_command_array = []
-    for tablename in excel_data_dic.keys():
-        # keyname 即为表名
+    for tablename, data in excel_data_dic.iteritems():
         create_sql_command = "create table `%s` (`rowindex` INT PRIMARY KEY," % tablename
         # 确定EXCEL导入SQL中占用列的个数
         sql_table_ncols = 1  # 所有的表，默认有一个rowindex列
 
         # 以下数据结构请参照 AnalysisExcel中的_read_excel_data 方法注释
         excel_dic = {}
-        excel_dic = excel_data_dic[tablename]
+        # 深层COPY重新开辟一个内存空间，保存所有的数据，然后新的变量指向新开辟的地址，防止改变原有的数据。
+        excel_dic = copy.deepcopy(data)
         field_dic = {}
         field_dic = excel_dic["fielddic"]  # field_dic:{fieldname,fieldtype}
         # 这里全TMD是地址，等于是指针，修改了field_name_array就等于修改了field_dic["fieldname"]里面的值，更加修改excel_data_dic里面的原始值。
@@ -115,7 +116,8 @@ def SaveToSqlite(databaseName, excel_data_dic={}, return_command=False):
                         sql_command_array.append(create_sql_command)
                     excute_add_sqlcommand(tablename, excel_dic)
                 except:
-                    LogCtrl.log("创建表 %s 的时候出错，数据库执行语句:\n %s \n 错误信息:\n %s \n" % (tablename, create_sql_command, traceback.format_exc()))
+                    LogCtrl.log("创建表 %s 的时候出错，数据库执行语句:\n %s \n 错误信息:\n %s \n" % (
+                    tablename, create_sql_command, traceback.format_exc()))
                     conn.rollback()
             else:
                 # print "列数一致，并且列名都一致，进行数据比对"
@@ -136,7 +138,8 @@ def SaveToSqlite(databaseName, excel_data_dic={}, return_command=False):
                             cursor.executescript("".join(command_array))
                             conn.commit()
                         except:
-                            LogCtrl.log("删除表 %s 的时候出现错误。执行语句:\n %s \n 错误信息: \n %s" % (tablename,"".join(command_array), traceback.format_exc()))
+                            LogCtrl.log("删除表 %s 的时候出现错误。执行语句:\n %s \n 错误信息: \n %s" % (
+                            tablename, "".join(command_array), traceback.format_exc()))
                             conn.rollback()
         else:
             print u"没有查询到%s 表" % tablename,
@@ -154,7 +157,8 @@ def SaveToSqlite(databaseName, excel_data_dic={}, return_command=False):
                 # end = time.time()
                 # print u"写入表 %s 数据耗时：%s" % (tablename, (end - start))
             except:
-                LogCtrl.log("创建表 %s 的时候出错，数据库执行语句:\n %s \n 错误信息:\n %s \n" % (tablename, create_sql_command, traceback.format_exc()))
+                LogCtrl.log("创建表 %s 的时候出错，数据库执行语句:\n %s \n 错误信息:\n %s \n" % (
+                tablename, create_sql_command, traceback.format_exc()))
                 conn.rollback()
     cursor.close()
     _close_connection()
@@ -257,7 +261,7 @@ def excute_update_command(tablename, excel_data_dic={}):
                 # if type(item) == str:
                 #     strvalues.append("'%s'" % item)
                 # else:
-                    strvalues.append("'%s'" % str(item))
+                strvalues.append("'%s'" % str(item))
             command_values = "%s %s)" % (command_values, ",".join(strvalues))
             command_value_array.append(command_values)
         command_temp = "%s %s;" % (command_temp, ",".join(command_value_array))
@@ -270,7 +274,7 @@ def excute_update_command(tablename, excel_data_dic={}):
             except:
                 # print traceback.format_exc()
                 LogCtrl.log("对表 %s 进行新数据写入时出错，请检查错误信息以及EXCEL数据\n数据库操作语句: %s \n错误信息:\n %s" % (
-                tablename, command_temp, traceback.format_exc()))
+                    tablename, command_temp, traceback.format_exc()))
                 conn.rollback()
         command_temp = None
     command_value_array = []  # 用完了将它恢复成没有数据的状态。
@@ -324,7 +328,7 @@ def excute_update_command(tablename, excel_data_dic={}):
         print u"耗时：%s" % (end - start)
     except:
         LogCtrl.log("对表 %s 进行数据更新时出错，请检查错误信息以及EXCEL数据\n数据库操作语句: %s \n错误信息:\n %s" % (
-        tablename, command_temp, traceback.format_exc()))
+            tablename, command_temp, traceback.format_exc()))
         conn.rollback()
     cursor.close()
     conn.close()
@@ -437,9 +441,14 @@ def get_delete_command(tablename, excel_data_dic={}):
     return command_array
 
 
-def _get_connection():
+def _get_connection(basename=""):
+    name = ""
+    if basename == "":
+        name = dataName
+    else:
+        name = basename
     global connection
-    connection = sqlite3.connect(dataName)
+    connection = sqlite3.connect(name)
     return connection
 
 
