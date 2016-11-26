@@ -172,12 +172,14 @@ def _read_excel_data(workbook, filename, sheetname, ismain, excel_data_dic={}):
                 if datatype[0] + datatype[-1] == "[]" or (
                                     datatype != "float" and datatype != "int" and datatype != "string"):
                     value = value.split(".")[0]
-                if datatype == "string":
-                    if not value.__contains__("[\n]"):
-                        value = value.replace("\n", "")
-                    if not value.__contains__("[\t]"):
-                        value = value.replace("\t", "")
-                    value = value.replace("\r", "")
+                if sheetname == "vip":
+                    print value
+                # if datatype == "string":
+                #     if not value.__contains__("[\n]"):
+                #         value = value.replace("\n", "")
+                #     if not value.__contains__("[\t]"):
+                #         value = value.replace("\t", "")
+                #     value = value.replace("\r", "")
                 rowdata.append(value)
             if has_unikey:
                 unikey_value = []
