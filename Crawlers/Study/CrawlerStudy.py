@@ -58,7 +58,7 @@ def link_crawler(seed_url, link_regex, max_depth=2):
     :return:
     '''
     # 创建一个双端队列,能够有效的快速插入,但是查找的时候会变慢。双端队列仅维护块索引,所以非常块。
-    # 参见: http://xiaorui.cc/2014/11/02/python%E4%BD%BF%E7%94%A8deque%E5%AE%9E%E7%8E%B0%E9%AB%98%E6%80%A7%E8%83%BD%E5%8F%8C%E7%AB%AF%E9%98%9F%E5%88%97/
+    # 参见: deque.md
     crawler_queue = Queue.deque([seed_url])
     seen = {}
     seen = set(crawler_queue)
