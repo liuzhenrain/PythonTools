@@ -606,13 +606,18 @@ def main(path, logsql):
     if os.path.exists(timeFile):
         strTimeInfos = open(timeFile, 'r').read()
     timeInfoList = strTimeInfos.split("##\n")
+
     for strTimeInfo in timeInfoList:
         if len(strTimeInfo) > 0:
-            timeArray = strTimeInfo.split(",")
-            name = timeArray[0]
-            time = timeArray[1]
-            timeInfo = {'name': name, 'time': time}
-            timeInfos[name] = timeInfo
+            try:
+                timeArray = strTimeInfo.split(",")
+                name = timeArray[0]
+                time = timeArray[1]
+                timeInfo = {'name': name, 'time': time}
+                timeInfos[name] = timeInfo
+            except:
+                print u"last_time.txt文件出错，请检查，所有的格式应该为:name,123123##"
+                exit()
 
     for file in glob.glob(dirPath):
         mtime = int(os.path.getmtime(file))

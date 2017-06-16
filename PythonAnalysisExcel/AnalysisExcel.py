@@ -84,7 +84,6 @@ def _read_excel_data(workbook, filename, sheetname, ismain, excel_data_dic={}):
     try:
         worksheet = workbook.sheet_by_name(sheetname)
     except:
-
         if ismain == True:
             LogCtrl.log("文件名%s和主表名%s字不一致，请修改EXCEL文件" % (filename, sheetname))
             return excel_data_dic
@@ -197,7 +196,12 @@ def _read_excel_data(workbook, filename, sheetname, ismain, excel_data_dic={}):
 def get_workbook(path):
     workbook = None
     if os.path.exists(path):
-        workbook = xlrd.open_workbook(path, formatting_info=True, encoding_override="utf-8")
+        try:
+            workbook = xlrd.open_workbook(path, formatting_info=True, encoding_override="utf-8")
+        except:
+            print u"Path:%s不是UTF-8编码的，请改成UTF-8编码" % path
+            print traceback.format_exc()
+            exit()
     return workbook
 
 
