@@ -1,1 +1,6 @@
 *.pyc
+*.cs
+*.log
+*.txt
+.idea
+*.db

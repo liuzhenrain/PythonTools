@@ -73,7 +73,7 @@ def main(xlsFile):
         exit()
 
     xlsData = xlrd.open_workbook(xlsFile,formatting_info = True,encoding_override="utf-8")
-    sheet = xlsData.sheet_by_name(u'ecode') # 第一张表
+    sheet = xlsData.sheet_by_name(u'ecode')  # 第一张表
     print u"生成hrl文件"
     erlData = genErl(sheet)
 

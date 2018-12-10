@@ -6,6 +6,8 @@ import re
 import os
 import time
 import sys
+import traceback
+
 req_head={
 "Cache-Control": "no-cache,private",
 'Content-Encoding': 'gzip',
@@ -46,7 +48,7 @@ book_array = [
 ]
 
 
-req_url_base='http://www.qu.la/book/'
+req_url_base='https://www.uukanshu.com/b/'
 
 class myThread (threading.Thread):   #继承父类threading.Thread
     def __init__(self, threadID, counter,start_page):
@@ -100,48 +102,52 @@ def get_txt(txt_id,start_page):
         #print("小说编号："+txt['id'])
         res=requests.get(req_url,params=req_header)             #获取小说目录界面
         soups=BeautifulSoup(res.text,"html.parser")           #转化
-        txt['title']=soups.select('#wrapper .box_con #maininfo #info h1')[0].text          #获取小说题目
-        txt['author']=soups.select('#wrapper .box_con #maininfo #info p')
-        txt['update']=txt['author'][2].text                                                       #获取小说最近更新时间
-        txt['lately'] = txt['author'][3].text                                                     #获取最近更新章节名称
-        txt['author']=txt['author'][0].text                                                       #获取小说作者
-        txt['intro']=soups.select('#wrapper .box_con #maininfo #intro')[0].text.strip()            #获取小说简介
+        txt['title']=soups.select('.xiaoshuo_content.clear .jieshao .jieshao_content h1')[0].text         #获取小说题目
+        txt['author']=soups.select('.xiaoshuo_content.clear .jieshao .jieshao_content h2 a')[0].text
+        # txt['update']=txt['author'][2].text                                                       #获取小说最近更新时间
+        # txt['lately'] = txt['author'][3].text                                                     #获取最近更新章节名称
+        # txt['author']=txt['author'][0].text                                                       #获取小说作者
+        txt['intro']=soups.select('.xiaoshuo_content.clear .jieshao .jieshao_content h3')[0].text.strip()            #获取小说简介
         print("编号："+'{0:0>8}   '.format(txt['id'])+  "小说名：《"+txt['title']+"》  开始下载。")
         #print("正在寻找第一章页面。。。")
-        first_page=soups.select('#wrapper .box_con #list dl dd a')                          #获取小说所有章节信息
+        first_page=soups.select('.xiaoshuo_content.clear .zhangjie #chapterList li a')                          #获取小说所有章节信息
         section_ct=len(first_page)                                                                  #获取小说总章页面数
         first_page = str(start_page) +".html"  #first_page[0]['href']                                        #获取小说第一章页面地址
         print("小说章节页数："+str(section_ct))
         print("第一章地址寻找成功："+ first_page)
         txt_section=first_page                                                                  #设置现在下载小说章节页面
-        write_txt_intro(txt,start_page)
+        # write_txt_intro(txt,start_page)
         fo = open('{0:0>8}-{1}.txt.download'.format(txt['id'],txt['title']), "ab+")         #打开小说文件
         fo.write((txt['title']+"\r\n").encode('UTF-8'))
         fo.write((txt['author'] + "\r\n").encode('UTF-8'))
-        fo.write((txt['update'] + "\r\n").encode('UTF-8'))
-        fo.write((txt['lately'] + "\r\n").encode('UTF-8'))
+        # fo.write((txt['update'] + "\r\n").encode('UTF-8'))
+        # fo.write((txt['lately'] + "\r\n").encode('UTF-8'))
         fo.write(("*******简介*******\r\n").encode('UTF-8'))
         fo.write(("\t"+txt['intro'] + "\r\n").encode('UTF-8'))
         fo.write(("******************\r\n").encode('UTF-8'))
         while(1):
             try:
                 r=requests.get(req_url+str(txt_section),params=req_header)                      #请求当前章节页面
-                soup=BeautifulSoup(r.text,"html.parser")                                        #soup转换
-                section_name=soup.select('#wrapper .content_read .box_con .bookname h1')[0]                             #获取章节名称
-                section_text=soup.select('#wrapper .content_read .box_con #content')[0]
+                content = re.sub("&#",'',r.text)
+                soup=BeautifulSoup(content,"html.parser")                                        #soup转换
+                section_name=soup.select('.h1title #timu')[0].text                             #获取章节名称
+                section_text=soup.select('#contentbox')[0]
                 for ss in section_text.select("script"):
                     ss.decompose()
-                section_text=re.sub( '\s+', '\r\n\t', section_text.text).strip('\r\n')#获取章节文本
-                txt_section=soup.select('#A3')[0]['href']                      #获取下一章地址
-                if(txt_section=='./'):                                                          #判断是否最后一章  最后一章则跳出循环
+                section_text=re.sub('\s+', '\r\n\t', section_text.text).strip('\r\n')#获取章节文本
+                next_a=soup.select_one('#next')                      #获取下一章地址
+                if(next_a.next == '全文完'):
                     print("编号："+'{0:0>8}   '.format(txt['id'])+  "小说名：《"+txt['title']+"》 下载完成")
                     break
-                fo.write(('\r'+section_name.text+'\r\n').encode('UTF-8'))                                #以二进制写入章节题目
+                else:
+                    txt_section = next_a['href'].split('/')[3]
+                fo.write(('\r'+section_name+'\r\n').encode('UTF-8'))                                #以二进制写入章节题目
                 fo.write((section_text).encode('UTF-8'))                        #以二进制写入章节内容
-                print(txt['title']+' 章节：'+section_name.text+'     已下载')
+                print(txt['title']+' 章节：'+section_name+'     已下载')
                 #print(section_text.text.encode('UTF-8'))
             except:
-                print("编号："+'{0:0>8}   '.format(txt['id'])+  "小说名：《"+txt['title']+"》 章节下载失败，正在重新下载。")
+                print(traceback.print_exc())
+                print("编号："+'{0:0>8}   '.format(txt['id'])+  "章节：《"+section_name+"》 章节下载失败，正在重新下载。")
         fo.close()
         os.rename('{0:0>8}-{1}.txt.download'.format(txt['id'],txt['title']), '{0:0>8}-{1}.txt'.format(txt['id'],txt['title']))
     except:
@@ -199,8 +205,8 @@ def get_txts(start_page):
     os.system('cls' if os.name == 'nt' else "printf '\033c'")
 
 #get_txt(764066)
-if __name__=='__main__':
-    pass
+# if __name__=='__main__':
+#     pass
     # print("请输入需要下载的小说编号：")
     # txt_id = input()
     # get_txt(txt_id,3808382)
