@@ -136,7 +136,7 @@ def get_txt(txt_id,start_page):
                     ss.decompose()
                 section_text=re.sub('\s+', '\r\n\t', section_text.text).strip('\r\n')#获取章节文本
                 next_a=soup.select_one('#next')                      #获取下一章地址
-                if(next_a.next == '全文完'):
+                if(next_a.next == '全文完' or re.sub(' ','',next_a.next) == "待续"):
                     print("编号："+'{0:0>8}   '.format(txt['id'])+  "小说名：《"+txt['title']+"》 下载完成")
                     break
                 else:
