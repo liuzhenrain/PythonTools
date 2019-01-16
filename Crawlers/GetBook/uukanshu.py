@@ -137,10 +137,8 @@ def get_txt(txt_id,start_page):
                 for ss in section_text.select("script"):
                     ss.decompose()
                 section_text=re.sub('\s+', '\r\n\t', section_text.text).strip('\r\n')#获取章节文本
-                soup_next_strainer = SoupStrainer('div',attrs={'class':"fanye_cen"})
-                soup_next = BeautifulSoup(r.text,'lxml',parse_only=soup_next_strainer)
-                next_a=soup_next.find('a',attrs={'id':'next'})                      #获取下一章地址
-                if(next_a.get('href')==None):
+                next_a=soup.select_one('#next')                      #获取下一章地址
+                if(next_a.next == '全文完' or re.sub(' ','',next_a.next) == "待续"):
                     print("编号："+'{0:0>8}   '.format(txt['id'])+  "小说名：《"+txt['title']+"》 下载完成")
                     break
                 else:
