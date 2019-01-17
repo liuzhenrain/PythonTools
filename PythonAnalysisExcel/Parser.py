@@ -10,11 +10,11 @@ import xlrd,os,sys
 def parseValue(vType, value):
     if vType == 'int' and value == '':
         value = 0
-    elif vType == 'int' and value <> '':
+    elif vType == 'int' and value != '':
         value = int(float(value))
     elif vType == 'float' and value == '':
         value = float(0)
-    elif vType == 'float' and value <> '':
+    elif vType == 'float' and value != '':
         value = float(value)
     return value
 
@@ -33,7 +33,7 @@ def genErl(sheet):
     allRows +="%% ecode.hrl (自动生成，请勿编辑!)\n"
     allRows +="%%----------------------------------------------------------------------\n"
     for i in range(4, sheet.nrows):
-        if GetCellData(sheet, i, 0) <> "" :
+        if GetCellData(sheet, i, 0) != "" :
             key = parseValue('int',GetCellData(sheet, i, 0))
             line = "-define(%s, %s). %%%s\n" % (GetCellData(sheet, i, 1), key, GetCellData(sheet, i, 2))
 #             print line
@@ -54,7 +54,7 @@ def genCs(sheet):
     allRows +="    {\n"
 
     for i in range(4, sheet.nrows):
-        if GetCellData(sheet, i, 0) <> "" :
+        if GetCellData(sheet, i, 0) != "" :
             key = parseValue('int',GetCellData(sheet, i, 0))
             line = "        public const int %s = %s; //%s\n" % (GetCellData(sheet, i, 1), key, GetCellData(sheet, i, 2))
 #             print line

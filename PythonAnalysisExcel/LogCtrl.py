@@ -9,7 +9,7 @@ logMsg = []
 
 def log(msg):
     global logMsg
-    print msg.decode("utf-8")
+    print(msg.decode("utf-8"))
     logMsg.append(msg)
 
 
