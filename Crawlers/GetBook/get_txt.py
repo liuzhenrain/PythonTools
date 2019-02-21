@@ -125,7 +125,8 @@ def get_txt(txt_id,start_page):
         fo.write(("******************\r\n").encode('UTF-8'))
         while(1):
             try:
-                r=requests.get(req_url+str(txt_section),params=req_header)                      #请求当前章节页面
+                r=requests.get(req_url+str(txt_section),params=req_header)
+                r = requests.get(req_url,headers = req_head, proxies = "http://188.241.234.145:53875")                      #请求当前章节页面
                 soup=BeautifulSoup(r.text,"html.parser")                                        #soup转换
                 section_name=soup.select('#wrapper .content_read .box_con .bookname h1')[0]                             #获取章节名称
                 section_text=soup.select('#wrapper .content_read .box_con #content')[0]
@@ -200,7 +201,7 @@ def get_txts(start_page):
 
 #get_txt(764066)
 if __name__=='__main__':
-    pass
+    # pass
     # print("请输入需要下载的小说编号：")
     # txt_id = input()
     # get_txt(txt_id,3808382)
@@ -208,6 +209,12 @@ if __name__=='__main__':
     # 创建新线程
     # for i_ls in range(9,50):
     #     get_txts(i_ls*100)
+    s = requests.get("https://www.uukanshu.com/b/76587/",headers = req_header, proxies = {"proxy":"http://188.241.234.145:53875"})
+    if s.status_code == requests.codes.get('ok'):
+        print(s.text)
+    else:
+        print("出现错误",s.status_code)
+        pass
 
 #cd get_txt
 #python get_txt.py
