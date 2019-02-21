@@ -1,7 +1,7 @@
 #coding:utf-8
 import  requests
 import threading
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup,SoupStrainer
 import re
 import os
 import time
@@ -101,7 +101,7 @@ def get_txt(txt_id,start_page):
         req_url=req_url_base+ txt['id']+'/'                        #根据小说编号获取小说URL
         #print("小说编号："+txt['id'])
         res=requests.get(req_url,params=req_header)             #获取小说目录界面
-        soups=BeautifulSoup(res.text,"html.parser")           #转化
+        soups=BeautifulSoup(res.text,"lxml")           #转化
         txt['title']=soups.select('.xiaoshuo_content.clear .jieshao .jieshao_content h1')[0].text         #获取小说题目
         txt['author']=soups.select('.xiaoshuo_content.clear .jieshao .jieshao_content h2 a')[0].text
         # txt['update']=txt['author'][2].text                                                       #获取小说最近更新时间
@@ -128,8 +128,10 @@ def get_txt(txt_id,start_page):
         while(1):
             try:
                 r=requests.get(req_url+str(txt_section),params=req_header)                      #请求当前章节页面
-                content = re.sub("&#",'',r.text)
-                soup=BeautifulSoup(content,"html.parser")                                        #soup转换
+                # content = re.sub("&#",'',r.text)
+                # only_class_w_main = SoupStrainer('div', attrs={'class': re.compile(r'bborder')})
+                only_class_w_main = SoupStrainer('div', attrs={'class': "box_left"})
+                soup=BeautifulSoup(r.text,"lxml",parse_only=only_class_w_main)                                        #soup转换
                 section_name=soup.select('.h1title #timu')[0].text                             #获取章节名称
                 section_text=soup.select('#contentbox')[0]
                 for ss in section_text.select("script"):
